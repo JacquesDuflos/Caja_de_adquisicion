@@ -22,13 +22,20 @@ void setup() {
 
 void loop() {
   // Getting the infos
-  V1 = mapfloat (analogRead(A0), 0, 1023, 0.0, 5.0);
+  // the volts are sensed directly by analog input, so 0 to 1023 val are mapped to 0-5v
+  V1 = mapfloat (analogRead(A0), 0, 1023, 0, 5);
   delay(5);
-  V2 = mapfloat (analogRead(A1), 0, 1023, 0.0, 5.0);
+  V2 = mapfloat (analogRead(A1), 0, 1023, 0, 5);
   delay(5);
-  I1 = mapfloat (analogRead(A2), 400, 627, -3.0, 3.0);
+  // The intensity come from a ASC712 B05 sensor with a sensitivity of 185 mV / A
+  // So I map from the 0-1023 to 0-5 then from 2.5 - 2.685 to 0-1A
+  I1 = map (analogRead(A2), 0, 1023, 0, 5000);
+  I1 = map (I1, 2500, 2685, 0, 1000);
+  I1 = float(I1)/1000.0;
   delay(5);
-  I2 = mapfloat (analogRead(A3), 400, 627, -3.0, 3.0);
+  I2 = map (analogRead(A3), 0, 1023, 0, 5000);
+  I2 = map (I2, 2500, 2685, 0, 1000);
+  I2 = float(I2)/1000.0;
 
   // printing to LCD
   vegal = "V1=";
