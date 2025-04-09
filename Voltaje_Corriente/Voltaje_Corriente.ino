@@ -28,6 +28,7 @@ const int Imetro2 = A3;
 const int SwitchV = 2;
 const int SwitchI = 3;
 const int ResetButton = 4;
+bool forceRefresh = false;
 
 unsigned long lastDebounceTime = 0;  // the last time the output pin was toggled
 unsigned long debounceDelay = 50; 
@@ -51,8 +52,9 @@ void setup() {
   Serial.begin(9600);
   // initialize lcd screen
   lcd.init();
-  // turn on the backlight
-  lcd.backlight();
+  // turn on the backlight, or not
+  // lcd.backlight();
+  Serial.println("setup compleat");
 }
 
 void loop() {
@@ -84,6 +86,7 @@ void loop() {
   //Serial.println();
 
   // Read the buttons
+  forceRefresh = false;
   int reading = digitalRead(SwitchV);
   if (reading != LastSVState){
     lastDebounceTime = millis();
@@ -96,6 +99,7 @@ void loop() {
       SVState = reading;
       if (SVState == HIGH){
         //Serial.println("BOUTON V TOUCHE");
+        forceRefresh = true;
         if (vDisplayed == "V1"){
           vDisplayed = "V2";
         }
@@ -115,6 +119,7 @@ void loop() {
     if (reading != SIState){
       SIState = reading;
       if (SIState == HIGH){
+        forceRefresh = true;
         if (iDisplayed == "I1"){
           iDisplayed = "I2";
         }
@@ -134,6 +139,7 @@ void loop() {
     if (reading != RBState){
       RBState = reading;
       if (RBState == HIGH){
+        forceRefresh = true;
         vCalc = vDisplayed;
         iCalc = iDisplayed;
         E = 0;
@@ -177,6 +183,7 @@ void loop() {
     }
     dE *= (millis() - lastTime)/1000.0;
     E += dE;
+    lastTime = millis();
   }
 
   char buf_E[20] = "";
@@ -200,7 +207,7 @@ void loop() {
     nameE = "E";
   }
 
-  if ((millis() - lastRefresh)/1000.0 > refreshPeriode){
+  if ((millis() - lastRefresh)/1000.0 > refreshPeriode or forceRefresh){
     lastRefresh = millis();
     // printing to LCD
     lcd.clear();
@@ -224,7 +231,7 @@ void loop() {
 
 
 
-  delay(100);
+  delay(500);
 }
 
 float mapfloat(long x, long in_min, long in_max, long out_min, long out_max)
