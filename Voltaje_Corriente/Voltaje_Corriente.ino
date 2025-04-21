@@ -135,7 +135,7 @@ String iegal;
 
 LiquidCrystal_I2C lcd(0x27,  16, 2);
 unsigned long lastRefresh = 0; // Last time the screen was updated
-const float refreshPeriode = 1; // In seconds, how often the screen is refreshed.
+const float refreshPeriode = 0.3; // In seconds, how often the screen is refreshed.
 
 void setup() {
   // Los pins de botones
@@ -187,21 +187,6 @@ void loop() {
     I2 = lp2.filt(I2_unfilter);
   }
 
-  // Create the JSON document
-  StaticJsonDocument<200> Json_enviar;
- 
-  Json_enviar["ProductName"] = "ModuloDidactico";
-  Json_enviar["V1"] = V1;
-  Json_enviar["V2"] = V2;
-  Json_enviar["I1"] = I1;
-  Json_enviar["I2"] = I2;
-
-/*
-  Json_enviar["I_filtre"]= I1;
-  Json_enviar["I_non_filtre"] = I1_unfilter;
-*/
-  serializeJson(Json_enviar, Serial);
-  Serial.println();
 
   // Read the buttons
   forceRefresh = false;
@@ -351,6 +336,8 @@ void loop() {
 
   if ((millis() - lastRefresh)/1000.0 > refreshPeriode or forceRefresh){
     lastRefresh = millis();
+
+    send_json();
     // printing to LCD
     lcd.clear();
     lcd.setCursor(0,0);
@@ -372,6 +359,25 @@ void loop() {
   }
 
   delay(10);
+}
+
+void send_json() // crée et envoie le document json sur le serial
+{
+  // Create the JSON document
+  StaticJsonDocument<200> Json_enviar;
+ 
+  Json_enviar["ProductName"] = "ModuloDidactico";
+  Json_enviar["V1"] = V1;
+  Json_enviar["V2"] = V2;
+  Json_enviar["I1"] = I1;
+  Json_enviar["I2"] = I2;
+/*
+
+  Json_enviar["I_filtre"]= I1;
+  Json_enviar["I_non_filtre"] = I1_unfilter;
+*/
+  serializeJson(Json_enviar, Serial);
+  Serial.println();
 }
 
 float mapfloat(long x, long in_min, long in_max, long out_min, long out_max)
