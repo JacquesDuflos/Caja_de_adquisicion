@@ -240,9 +240,9 @@ void loop() {
     else{
       // when the state has not changed
       if ((SIState == HIGH) and ((millis() - iPushedTime) > 1500)){
-        Serial.println("appuy prologe detecte");
+        //Serial.println("appuy prologe detecte");
         if (not isSampling){
-          Serial.println("demarrage sampling");
+          //Serial.println("demarrage sampling");
           isSampling = true;
           nSample = 0;
           sampleI1 = 0;
@@ -357,11 +357,11 @@ void loop() {
     lcd.setCursor(0,1);
     lcd.print(ligne);
   }
-
   delay(10);
 }
 
-void send_json() // crée et envoie le document json sur le serial
+// crée et envoie le document json sur le serial
+void send_json()
 {
   // Create the JSON document
   StaticJsonDocument<200> Json_enviar;
