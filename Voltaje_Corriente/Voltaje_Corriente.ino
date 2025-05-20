@@ -110,6 +110,8 @@ char * iDisplayed = "I1"; // la intensidad para mostrar en lcd
 char * vCalc = ""; // la tension para calcular la energia
 char * iCalc = ""; // la intensidad para calcular la energia
 
+const int SqrtUp = 5; // Primer pin del señal cuadrado
+const int SqrtDown = 6; // Segundo pin del señal cuadrado
 const int Vmetro1 = A0;
 const int Vmetro2 = A1;
 const int Imetro1 = A2;
@@ -133,7 +135,7 @@ String line2;
 String vegal;
 String iegal;
 
-LiquidCrystal_I2C lcd(0x27,  16, 2);
+//LiquidCrystal_I2C lcd(0x27,  16, 2);
 unsigned long lastRefresh = 0; // Last time the screen was updated
 const float refreshPeriode = 0.3; // In seconds, how often the screen is refreshed.
 
@@ -142,16 +144,21 @@ void setup() {
   pinMode(SwitchV, INPUT);
   pinMode(SwitchI, INPUT);
   pinMode(ResetButton, INPUT);
+  // Los pins del senal cuadrado
+  pinMode(SqrtUp, OUTPUT);
+  pinMode(SqrtDown, OUTPUT);
   // Start serial comunication
   Serial.begin(9600);
+  Serial.println("Starting setup ....");
   // initialize lcd screen
-  lcd.init();
+  //lcd.init();
   // turn on the backlight, or not
   // lcd.backlight();
-  Serial.println("setup compleat");
+  Serial.println("Setup compleat !");
 }
 
 void loop() {
+  Serial.println("Loop started...");
   // Getting the infos
   // the volts are sensed directly by analog input, so 0 to 1023 val are mapped to 0-5v
   V1 = mapfloat (analogRead(A0), 0, 1023, 0, 5);
@@ -339,8 +346,8 @@ void loop() {
 
     send_json();
     // printing to LCD
-    lcd.clear();
-    lcd.setCursor(0,0);
+    //lcd.clear();
+    //lcd.setCursor(0,0);
     // Buffers pour conversion
     char ligne[33]; // 32 caractères + \0
 
@@ -348,16 +355,23 @@ void loop() {
     snprintf(ligne, sizeof(ligne), "%s %s %s %s", vDisplayed, buf_V, iDisplayed, buf_I);
 
     // Affichage sur le LCD
-    lcd.setCursor(0, 0);
-    lcd.print(ligne);
+    //lcd.setCursor(0, 0);
+    //lcd.print(ligne);
 
     // Construction de la ligne 2 complète
     snprintf(ligne, sizeof(ligne), "%s %s %s %s", "P", buf_P, nameE, buf_E);
 
-    lcd.setCursor(0,1);
-    lcd.print(ligne);
+    //lcd.setCursor(0,1);
+    //lcd.print(ligne);
   }
+
+  // creer un signal carre 50 hz
+  bool flip = (millis() % 20) < 10;
+  digitalWrite(SqrtUp, flip);
+  digitalWrite(SqrtDown, !flip);
+  Serial.println("Loop about to end ...");
   delay(10);
+  Serial.println("Loop ended !");
 }
 
 // crée et envoie le document json sur le serial
@@ -378,6 +392,7 @@ void send_json()
 */
   serializeJson(Json_enviar, Serial);
   Serial.println();
+
 }
 
 float mapfloat(long x, long in_min, long in_max, long out_min, long out_max)
