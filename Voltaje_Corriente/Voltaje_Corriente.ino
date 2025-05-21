@@ -88,7 +88,6 @@ class LowPass
 LowPass<2> lp1(1,1e3,true);
 LowPass<2> lp2(1,1e3,true);
 
-
 float V1;
 float V2;
 float I1;
@@ -135,7 +134,7 @@ String line2;
 String vegal;
 String iegal;
 
-//LiquidCrystal_I2C lcd(0x27,  16, 2);
+LiquidCrystal_I2C lcd(0x27,  16, 2);
 unsigned long lastRefresh = 0; // Last time the screen was updated
 const float refreshPeriode = 0.3; // In seconds, how often the screen is refreshed.
 
@@ -149,16 +148,15 @@ void setup() {
   pinMode(SqrtDown, OUTPUT);
   // Start serial comunication
   Serial.begin(9600);
-  Serial.println("Starting setup ....");
   // initialize lcd screen
-  //lcd.init();
+  lcd.init();
   // turn on the backlight, or not
-  // lcd.backlight();
+  lcd.backlight();
   Serial.println("Setup compleat !");
 }
 
 void loop() {
-  Serial.println("Loop started...");
+  //Serial.println("Loop started...");
   // Getting the infos
   // the volts are sensed directly by analog input, so 0 to 1023 val are mapped to 0-5v
   V1 = mapfloat (analogRead(A0), 0, 1023, 0, 5);
@@ -346,8 +344,8 @@ void loop() {
 
     send_json();
     // printing to LCD
-    //lcd.clear();
-    //lcd.setCursor(0,0);
+    lcd.clear();
+    lcd.setCursor(0,0);
     // Buffers pour conversion
     char ligne[33]; // 32 caractères + \0
 
@@ -355,23 +353,23 @@ void loop() {
     snprintf(ligne, sizeof(ligne), "%s %s %s %s", vDisplayed, buf_V, iDisplayed, buf_I);
 
     // Affichage sur le LCD
-    //lcd.setCursor(0, 0);
-    //lcd.print(ligne);
+    lcd.setCursor(0, 0);
+    lcd.print(ligne);
 
     // Construction de la ligne 2 complète
     snprintf(ligne, sizeof(ligne), "%s %s %s %s", "P", buf_P, nameE, buf_E);
 
-    //lcd.setCursor(0,1);
-    //lcd.print(ligne);
+    lcd.setCursor(0,1);
+    lcd.print(ligne);
   }
 
   // creer un signal carre 50 hz
   bool flip = (millis() % 20) < 10;
   digitalWrite(SqrtUp, flip);
   digitalWrite(SqrtDown, !flip);
-  Serial.println("Loop about to end ...");
+  //Serial.println("Loop about to end ...");
   delay(10);
-  Serial.println("Loop ended !");
+  //Serial.println("Loop ended !");
 }
 
 // crée et envoie le document json sur le serial
