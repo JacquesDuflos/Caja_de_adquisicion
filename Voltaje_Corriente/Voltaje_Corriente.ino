@@ -89,11 +89,11 @@ LowPass<2> lp1(1,1e3,true);
 LowPass<2> lp2(1,1e3,true);
 
 
-float V1;
-float V2;
-float I1;
+float V1; // EL valor detectado por le voltimetro 1
+float V2; // EL valor detectado por el voltimetro 2
+float I1; // El valor detectado por el voltimetro 1
 float I1offset; // obtained by calibrating
-float I2;
+float I2; // El valor detectado por el voltimitro 2
 float I2offset; // obtained by calibrating
 float P; // El poder, calculado a partir del v y i selecionado
 float E; // la energia, calculada integrando el poder
@@ -116,7 +116,7 @@ const int Imetro1 = A2;
 const int Imetro2 = A3;
 const int SwitchV = 2;
 const int SwitchI = 3;
-const int ResetButton = 4;
+const int ResetButton = 4; // Deprecated, no hay mas button reset
 bool forceRefresh = false;
 
 unsigned long lastDebounceTime = 0;  // the last time the output pin was toggled
@@ -130,10 +130,12 @@ const int sampleSize = 50; // the total number of sample
 
 String line1;
 String line2;
+String line3;
+String line4;
 String vegal;
 String iegal;
 
-LiquidCrystal_I2C lcd(0x27,  16, 2);
+LiquidCrystal_I2C lcd(0x27,  20, 4);
 unsigned long lastRefresh = 0; // Last time the screen was updated
 const float refreshPeriode = 0.3; // In seconds, how often the screen is refreshed.
 
