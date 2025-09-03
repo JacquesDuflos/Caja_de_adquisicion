@@ -1,4 +1,3 @@
-#include <ArduinoJson.h>
 #include <LiquidCrystal_I2C.h>
 #include <Wire.h>
 #include <stdio.h>
@@ -147,7 +146,7 @@ void setup() {
   // initialize lcd screen
   lcd.init();
   // turn on the backlight, or not
-  // lcd.backlight();
+  lcd.backlight();
   Serial.println("setup compleat");
 }
 
@@ -338,7 +337,7 @@ void loop() {
     lastRefresh = millis();
 
     //send_json();
-    send_4_float();
+    send_4_floats();
     // printing to LCD
     lcd.clear();
     lcd.setCursor(0,0);
@@ -361,30 +360,12 @@ void loop() {
   delay(10);
 }
 
-// crée et envoie le document json sur le serial
-void send_json()
-{
-  // Create the JSON document
-  StaticJsonDocument<200> Json_enviar;
- 
-  Json_enviar["ProductName"] = "ModuloDidactico";
-  Json_enviar["V1"] = V1;
-  Json_enviar["V2"] = V2;
-  Json_enviar["I1"] = I1;
-  Json_enviar["I2"] = I2;
-/*
-  Json_enviar["I_filtre"]= I1;
-  Json_enviar["I_non_filtre"] = I1_unfilter;
-*/
-  serializeJson(Json_enviar, Serial);
-  Serial.println();
-}
 
 // Envoie 4 floats sous forme de 16 octets dans l'ordre V1, V2, I1, I2
 void send_4_floats()
 {
   // Mettre les valeurs dans un tableau
-  float valeurs[4] = {v1, v2, v3, v4};
+  float valeurs[4] = {V1, V2, I1, I2};
 
   // Envoyer les 16 octets directement
   Serial.write((uint8_t*)valeurs, sizeof(valeurs));
