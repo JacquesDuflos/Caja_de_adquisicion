@@ -91,11 +91,13 @@ LowPass<2> lp2(1,1e3,true);
 float V1; // Value of the 1st voltmeter (0-5 v) // EL valor detectado por le voltimetro 1
 float V2; // Value of the 2nd voltmeter (0-30 v) // EL valor detectado por el voltimetro 2
 float I1; // El valor detectado por el voltimetro 1
-float I1offset; // obtained by calibrating
+float I1offset = 0; // obtained by calibrating
 float I2; // El valor detectado por el voltimitro 2
-float I2offset; // obtained by calibrating
-float P; // El poder, calculado a partir del v y i selecionado
-float E; // la energia, calculada integrando el poder
+float I2offset = 0; // obtained by calibrating
+float P1; // El poder, calculado a partir del v y i selecionado
+float P2;
+float E1; // la energia, calculada integrando el poder
+float E2;
 unsigned long lastTime = 0; // to get the calculate the delta between 2 loops
 
 int SVState; // estado del boton de cambio de voltimetro
@@ -104,10 +106,6 @@ int RBState; // estado del boton de resetear
 int LastSVState = LOW; // estado presednete del boton de voltimetro
 int LastSIState = LOW; // estado presedente del boton de amperimetro
 int LastRBState = LOW; // estado presedente del boton de resetear
-char * vDisplayed = "V1"; // la tension para mostrar en lcd
-char * iDisplayed = "I1"; // la intensidad para mostrar en lcd
-char * vCalc = ""; // la tension para calcular la energia
-char * iCalc = ""; // la intensidad para calcular la energia
 
 const int Vmetro1 = A0;
 const int Vmetro2 = A1;
@@ -127,10 +125,6 @@ float sampleI1 = 0; // the sum of samples for I1
 float sampleI2 = 0; // the sum of samples for I2
 const int sampleSize = 50; // the total number of sample
 
-String line1;
-String line2;
-String line3;
-String line4;
 String vegal;
 String iegal;
 
@@ -168,6 +162,7 @@ void loop() {
   int I2_analog =  map (analogRead(A3), 0, 1023, 0, 5000);
   I2_analog = map (I2_analog, 2500, 2685, 0, 1000);
   float I2_unfilter = float(I2_analog)/1000.0;
+  
   if (isSampling){
     sampleI1 += I1_unfilter;
     sampleI2 += I2_unfilter;
@@ -179,13 +174,14 @@ void loop() {
     }
   }
   else{
-    
     I1_unfilter -= I1offset;
     I1 = lp1.filt(I1_unfilter);
+    //I1 = I1_unfilter;
     //delay(5);
     
     I2_unfilter -= I2offset;
     I2 = lp2.filt(I2_unfilter);
+    //I2 = I2_unfilter;
   }
 
 
@@ -202,14 +198,10 @@ void loop() {
       //Serial.println("button flipped");
       SVState = reading;
       if (SVState == HIGH){
+        //
         //Serial.println("BOUTON V TOUCHE");
+        //
         forceRefresh = true;
-        if (vDisplayed == "V1"){
-          vDisplayed = "V2";
-        }
-        else{
-          vDisplayed = "V1";
-        }
       }
     }
   }
@@ -228,13 +220,6 @@ void loop() {
       }
       else{
         if (not isSampling){
-          forceRefresh = true;
-          if (iDisplayed == "I1"){
-            iDisplayed = "I2";
-          }
-          else{
-            iDisplayed = "I1";
-          }
         }
       }
     }
@@ -263,77 +248,80 @@ void loop() {
       RBState = reading;
       if (RBState == HIGH){
         forceRefresh = true;
-        vCalc = vDisplayed;
-        iCalc = iDisplayed;
-        E = 0;
+        E1 = 0;
       }
     }
   }
   LastRBState = reading;
 
   // calculate P and create strings for lcd display
-  char buf_V[10];
-  if (vDisplayed == "V1"){
-    P = V1;
-    dtostrf(V1, 4, 1, buf_V);
-  } else {
-    P = V2;
-    dtostrf(V2, 4, 1, buf_V);
-  }
-  char buf_I[10];
-  char buf_P[10];
+  char buf_V1[10];
+  char buf_V2[10];
+  dtostrf(V1, 4, 1, buf_V1);
+  dtostrf(V2, 4, 1, buf_V2);
+
+  char buf_I1[10];
+  char buf_I2[10];
+  char buf_P1[10];
+  char buf_P2[10];
   if (isSampling){
-    strcpy(buf_I, "calib");
-    strcpy(buf_P, "calib");
+    strcpy(buf_I1, "calib");
+    strcpy(buf_P1, "calib");
   }
   else{
-    if (iDisplayed == "I1"){
-      P *= I1;
-      dtostrf(I1, 4, 1, buf_I);
-    } else {
-      P*= I2;
-      dtostrf(I2, 4, 1, buf_I);
-    }
-    dtostrf(P, 4, 1, buf_P);
+    P1 = V1 * I1;
+    P2 = V2 * I2;
+    dtostrf(I1, 4, 1, buf_I1);
+    dtostrf(I2, 4, 1, buf_I2);
+    dtostrf(P1, 4, 1, buf_P1);
+    dtostrf(P2, 4, 1, buf_P2);
   }
   // calculate E
-  if (iCalc != "" and vCalc != ""){
-    float dE;
-    if (iCalc == "I1"){
-      dE = I1;
-    } else {
-      dE = I2;
-    }
-    if (vCalc == "V1") {
-      dE *= V1;
-    } else {
-      dE *= V2;
-    }
-    dE *= (millis() - lastTime)/1000.0;
-    E += dE;
-    lastTime = millis();
-  }
+  float dE;
+  dE = I1 * V1;
+  dE *= (millis() - lastTime)/1000.0;
+  E1 += dE;
 
-  char buf_E[20] = "";
-  char * nameE = "";
-  if (iCalc == iDisplayed and vCalc == vDisplayed){
-    // Conversion énergie en notation scientifique : 3 chiffres de mantisse + exposant
-    // Exemple : 3.48e+08
-    int exposant = 0;
-    float abs_e = fabs(E);
+  dE = I2 * V2;
+  dE *= (millis() - lastTime)/1000.0;
+  E2 += dE;
+
+  lastTime = millis();
+
+  char buf_E1[20] = "";
+  char buf_E2[20] = "";
+  char * nameE = "E";
+
+  // Conversion énergie en notation scientifique : 3 chiffres de mantisse + exposant
+  // Exemple : 3.48e+08
+  int exposant = 0;
+  float abs_e = fabs(E1);
 
   while (abs_e >= 10.0) {
     abs_e /= 10.0;
     exposant++;
   }
 
-    if (E < 0) {
-      abs_e = -abs_e;
-    }
-    dtostrf(abs_e, 4, 1, buf_E);
-    snprintf(buf_E, sizeof(buf_E), "%se%d", buf_E, exposant);
-    nameE = "E";
+  if (E1 < 0) {
+    abs_e = -abs_e;
   }
+  dtostrf(abs_e, 4, 1, buf_E1);
+  snprintf(buf_E1, sizeof(buf_E1), "%se%d", buf_E1, exposant);
+
+  exposant = 0;
+  abs_e = fabs(E2);
+
+  while (abs_e >= 10.0) {
+    abs_e /= 10.0;
+    exposant++;
+  }
+
+  if (E2 < 0) {
+    abs_e = -abs_e;
+  }
+  dtostrf(abs_e, 4, 1, buf_E2);
+  snprintf(buf_E2, sizeof(buf_E2), "%se%d", buf_E2, exposant);
+
 
   if ((millis() - lastRefresh)/1000.0 > refreshPeriode or forceRefresh){
     lastRefresh = millis();
@@ -342,21 +330,33 @@ void loop() {
     send_4_floats();
     // printing to LCD
     lcd.clear();
-    lcd.setCursor(0,0);
     // Buffers pour conversion
     char ligne[33]; // 32 caractères + \0
 
     // Construction de la ligne 1 complète
-    snprintf(ligne, sizeof(ligne), "%s %s %s %s", vDisplayed, buf_V, iDisplayed, buf_I);
+    snprintf(ligne, sizeof(ligne), "%s %s %s %s", "V1", buf_V1, "I1", buf_I1);
 
     // Affichage sur le LCD
     lcd.setCursor(0, 0);
     lcd.print(ligne);
 
     // Construction de la ligne 2 complète
-    snprintf(ligne, sizeof(ligne), "%s %s %s %s", "P", buf_P, nameE, buf_E);
+    snprintf(ligne, sizeof(ligne), "%s %s %s %s", "P1", buf_P1, "E1", buf_E1);
 
-    lcd.setCursor(0,1);
+    lcd.setCursor(0, 1);
+    lcd.print(ligne);
+
+    // Construction de la ligne 3 complète
+    snprintf(ligne, sizeof(ligne), "%s %s %s %s", "V2", buf_V2, "I2", buf_I2);
+
+    // Affichage sur le LCD
+    lcd.setCursor(0, 2);
+    lcd.print(ligne);
+
+    // Construction de la ligne 4 complète
+    snprintf(ligne, sizeof(ligne), "%s %s %s %s", "P2", buf_P2, "E2", buf_E2);
+
+    lcd.setCursor(0, 3);
     lcd.print(ligne);
   }
   delay(10);
