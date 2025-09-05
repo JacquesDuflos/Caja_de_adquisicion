@@ -84,8 +84,8 @@ class LowPass
 };
 
 // Filter instance
-LowPass<2> lp1(1,1e3,true);
-LowPass<2> lp2(1,1e3,true);
+LowPass<2> lp1(4,1e3,true);
+LowPass<2> lp2(4,1e3,true);
 
 
 float V1; // Value of the 1st voltmeter (0-5 v) // EL valor detectado por le voltimetro 1
@@ -100,27 +100,27 @@ float E1; // la energia, calculada integrando el poder
 float E2;
 unsigned long lastTime = 0; // to get the calculate the delta between 2 loops
 
-int SVState; // estado del boton de cambio de voltimetro
-int SIState; // estado del boton de cambio de amperimetro
-int RBState; // estado del boton de resetear
-int LastSVState = LOW; // estado presednete del boton de voltimetro
-int LastSIState = LOW; // estado presedente del boton de amperimetro
-int LastRBState = LOW; // estado presedente del boton de resetear
+int M1State; // estado del boton de medision 1 (como Mesure 1 state)
+int M2State; // estado del boton de medision 2 (como Mesure 2 state)
 
-const int Vmetro1 = A0;
-const int Vmetro2 = A1;
-const int Imetro1 = A2;
-const int Imetro2 = A3;
-const int SwitchV = 2;
-const int SwitchI = 3;
-const int ResetButton = 4; // Deprecated, no hay mas button reset
+int LastM1State = LOW; // estado presednete del boton de measure 1
+int LastM2State = LOW; // estado presedente del boton de measure 2
+
+const int Vmetro1 = A0; // pin del voltimetro 1
+const int Vmetro2 = A1; // pin del voltimetro 2
+const int Imetro1 = A2; // pin del amperimetro 1
+const int Imetro2 = A3; // pin del amperimetro 2
+const int Measure1 = 2; // pin del boton de medision 1
+const int Measure2 = 3; // pin del boton de medicion 2
 bool forceRefresh = false;
 
 unsigned long lastDebounceTime = 0;  // the last time the output pin was toggled
 unsigned long debounceDelay = 50; 
 unsigned long iPushedTime = 0; // to detect if the i button was manained 
-bool isSampling = false;
-int nSample = 0; // the iteration of samle
+bool isSampling1 = false; // si se esta calibrando el I1
+bool isSampling2 = false; // si se esta calibrando el I2
+int nSample1 = 0; // the iteration of sample for I1
+int nSample2 = 0; // the itaration of sample for I2
 float sampleI1 = 0; // the sum of samples for I1
 float sampleI2 = 0; // the sum of samples for I2
 const int sampleSize = 50; // the total number of sample
@@ -134,9 +134,8 @@ const float refreshPeriode = 0.3; // In seconds, how often the screen is refresh
 
 void setup() {
   // Los pins de botones
-  pinMode(SwitchV, INPUT);
-  pinMode(SwitchI, INPUT);
-  pinMode(ResetButton, INPUT);
+  pinMode(Measure1, INPUT);
+  pinMode(Measure2, INPUT);
   // Start serial comunication
   Serial.begin(9600);
   // initialize lcd screen
@@ -163,14 +162,12 @@ void loop() {
   I2_analog = map (I2_analog, 2500, 2685, 0, 1000);
   float I2_unfilter = float(I2_analog)/1000.0;
   
-  if (isSampling){
+  if (isSampling1){
     sampleI1 += I1_unfilter;
-    sampleI2 += I2_unfilter;
-    nSample ++;
-    if (nSample >= sampleSize){
+    nSample1 ++;
+    if (nSample1 >= sampleSize){
       I1offset = sampleI1 / sampleSize;
-      I2offset = sampleI2 / sampleSize;
-      isSampling = false;
+      isSampling1 = false;
     }
   }
   else{
@@ -178,81 +175,89 @@ void loop() {
     I1 = lp1.filt(I1_unfilter);
     //I1 = I1_unfilter;
     //delay(5);
-    
+  }
+
+  if (isSampling2){
+    sampleI2 += I2_unfilter;
+    nSample2 ++;
+    if (nSample2 >= sampleSize){
+      I2offset = sampleI2 / sampleSize;
+      isSampling2 = false;
+    }
+  }
+  else{
     I2_unfilter -= I2offset;
     I2 = lp2.filt(I2_unfilter);
     //I2 = I2_unfilter;
+    //delay(5);
   }
-
 
   // Read the buttons
   forceRefresh = false;
-  int reading = digitalRead(SwitchV);
-  if (reading != LastSVState){
+  int reading = digitalRead(Measure1);
+  if (reading != LastM1State){
     lastDebounceTime = millis();
     //Serial.println("Bounce");
   }
   if ((millis() - lastDebounceTime) > debounceDelay){
     //Serial.println("long touch");
-    if (reading != SVState){
+    if (reading != M1State){
       //Serial.println("button flipped");
-      SVState = reading;
-      if (SVState == HIGH){
+      M1State = reading;
+      if (M1State == HIGH){
         //
         //Serial.println("BOUTON V TOUCHE");
         //
         forceRefresh = true;
       }
     }
+    else{
+      // when the state has not changed
+      if ((M1State == HIGH) and ((millis() - iPushedTime) > 1500)){
+        //Serial.println("appuy prologe detecte");
+        if (not isSampling1){
+          //Serial.println("demarrage sampling");
+          isSampling1 = true;
+          nSample1 = 0;
+          sampleI1 = 0;
+        }
+      }
+    }
   }
-  LastSVState = reading;
+  LastM1State = reading;
 
-  reading = digitalRead(SwitchI);
-  if (reading != LastSIState){
+  reading = digitalRead(Measure2);
+  if (reading != LastM2State){
     lastDebounceTime = millis();
+    //Serial.println("Bounce");
   }
   if ((millis() - lastDebounceTime) > debounceDelay){
-    if (reading != SIState){
-      // When a change of state is confirmed
-      SIState = reading;
-      if (SIState == HIGH){
-        iPushedTime = millis();
-      }
-      else{
-        if (not isSampling){
-        }
+    //Serial.println("long touch");
+    if (reading != M2State){
+      //Serial.println("button flipped");
+      M2State = reading;
+      if (M2State == HIGH){
+        //
+        //Serial.println("BOUTON V TOUCHE");
+        //
+        forceRefresh = true;
       }
     }
     else{
       // when the state has not changed
-      if ((SIState == HIGH) and ((millis() - iPushedTime) > 1500)){
+      if ((M2State == HIGH) and ((millis() - iPushedTime) > 1500)){
         //Serial.println("appuy prologe detecte");
-        if (not isSampling){
+        if (not isSampling2){
           //Serial.println("demarrage sampling");
-          isSampling = true;
-          nSample = 0;
-          sampleI1 = 0;
+          isSampling2 = true;
+          nSample2 = 0;
           sampleI2 = 0;
         }
       }
     }
   }
-  LastSIState = reading;
+  LastM2State = reading;
 
-  reading = digitalRead(ResetButton);
-  if (reading != LastRBState){
-    lastDebounceTime = millis();
-  }
-  if ((millis() - lastDebounceTime) > debounceDelay){
-    if (reading != RBState){
-      RBState = reading;
-      if (RBState == HIGH){
-        forceRefresh = true;
-        E1 = 0;
-      }
-    }
-  }
-  LastRBState = reading;
 
   // calculate P and create strings for lcd display
   char buf_V1[10];
@@ -264,9 +269,13 @@ void loop() {
   char buf_I2[10];
   char buf_P1[10];
   char buf_P2[10];
-  if (isSampling){
+  if (isSampling1){
     strcpy(buf_I1, "calib");
     strcpy(buf_P1, "calib");
+  }
+  if (isSampling2){
+    strcpy(buf_I2, "calib");
+    strcpy(buf_P2, "calib");
   }
   else{
     P1 = V1 * I1;
@@ -290,7 +299,6 @@ void loop() {
 
   char buf_E1[20] = "";
   char buf_E2[20] = "";
-  char * nameE = "E";
 
   // Conversion énergie en notation scientifique : 3 chiffres de mantisse + exposant
   // Exemple : 3.48e+08
@@ -329,7 +337,7 @@ void loop() {
     //send_json();
     send_4_floats();
     // printing to LCD
-    lcd.clear();
+    //lcd.clear();
     // Buffers pour conversion
     char ligne[33]; // 32 caractères + \0
 
