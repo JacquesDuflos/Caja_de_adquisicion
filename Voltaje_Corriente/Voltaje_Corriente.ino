@@ -88,8 +88,8 @@ LowPass<2> lp1(1,1e3,true);
 LowPass<2> lp2(1,1e3,true);
 
 
-float V1;
-float V2;
+float V1; // Value of the 1st voltmeter (0-5 v)
+float V2; // Value of the 2nd voltmeter (0-30 v)
 float I1;
 float I1offset; // obtained by calibrating
 float I2;
@@ -155,7 +155,7 @@ void loop() {
   // the volts are sensed directly by analog input, so 0 to 1023 val are mapped to 0-5v
   V1 = mapfloat (analogRead(A0), 0, 1023, 0, 5);
   //delay(5);
-  V2 = mapfloat (analogRead(A1), 0, 1023, 0, 5);
+  V2 = mapfloat (analogRead(A1), 0, 1023, 0, 30);
   //delay(5);
 
   // The intensity come from a ASC712 B05 sensor with a sensitivity of 185 mV / A
