@@ -1,4 +1,3 @@
-#include <ArduinoJson.h>
 #include <LiquidCrystal_I2C.h>
 #include <Wire.h>
 #include <stdio.h>
@@ -89,8 +88,8 @@ LowPass<2> lp1(1,1e3,true);
 LowPass<2> lp2(1,1e3,true);
 
 
-float V1; // EL valor detectado por le voltimetro 1
-float V2; // EL valor detectado por el voltimetro 2
+float V1; // Value of the 1st voltmeter (0-5 v) // EL valor detectado por le voltimetro 1
+float V2; // Value of the 2nd voltmeter (0-30 v) // EL valor detectado por el voltimetro 2
 float I1; // El valor detectado por el voltimetro 1
 float I1offset; // obtained by calibrating
 float I2; // El valor detectado por el voltimitro 2
@@ -149,7 +148,7 @@ void setup() {
   // initialize lcd screen
   lcd.init();
   // turn on the backlight, or not
-  // lcd.backlight();
+  lcd.backlight();
   Serial.println("setup compleat");
 }
 
@@ -158,7 +157,7 @@ void loop() {
   // the volts are sensed directly by analog input, so 0 to 1023 val are mapped to 0-5v
   V1 = mapfloat (analogRead(A0), 0, 1023, 0, 5);
   //delay(5);
-  V2 = mapfloat (analogRead(A1), 0, 1023, 0, 5);
+  V2 = mapfloat (analogRead(A1), 0, 1023, 0, 30);
   //delay(5);
 
   // The intensity come from a ASC712 B05 sensor with a sensitivity of 185 mV / A
@@ -272,7 +271,7 @@ void loop() {
   }
   LastRBState = reading;
 
-  // calculate P and create strings
+  // calculate P and create strings for lcd display
   char buf_V[10];
   if (vDisplayed == "V1"){
     P = V1;
@@ -339,7 +338,8 @@ void loop() {
   if ((millis() - lastRefresh)/1000.0 > refreshPeriode or forceRefresh){
     lastRefresh = millis();
 
-    send_json();
+    //send_json();
+    send_4_floats();
     // printing to LCD
     lcd.clear();
     lcd.setCursor(0,0);
@@ -362,24 +362,15 @@ void loop() {
   delay(10);
 }
 
-// crée et envoie le document json sur le serial
-void send_json()
-{
-  // Create the JSON document
-  StaticJsonDocument<200> Json_enviar;
- 
-  Json_enviar["ProductName"] = "ModuloDidactico";
-  Json_enviar["V1"] = V1;
-  Json_enviar["V2"] = V2;
-  Json_enviar["I1"] = I1;
-  Json_enviar["I2"] = I2;
-/*
 
-  Json_enviar["I_filtre"]= I1;
-  Json_enviar["I_non_filtre"] = I1_unfilter;
-*/
-  serializeJson(Json_enviar, Serial);
-  Serial.println();
+// Envoie 4 floats sous forme de 16 octets dans l'ordre V1, V2, I1, I2
+void send_4_floats()
+{
+  // Mettre les valeurs dans un tableau
+  float valeurs[4] = {V1, V2, I1, I2};
+
+  // Envoyer les 16 octets directement
+  Serial.write((uint8_t*)valeurs, sizeof(valeurs));
 }
 
 float mapfloat(long x, long in_min, long in_max, long out_min, long out_max)
