@@ -150,9 +150,9 @@ void setup() {
 void loop() {
   // Getting the infos
   // the volts are sensed directly by analog input, so 0 to 1023 val are mapped to 0-5v
-  V1 = mapfloat (analogRead(A0), 0, 1023, 0, 5);
+  V1 = mapfloat (analogRead(A0), 0, 1023, 0, 30);
   //delay(5);
-  V2 = mapfloat (analogRead(A1), 0, 1023, 0, 30);
+  V2 = mapfloat (analogRead(A1), 0, 1023, 0, 5);
   //delay(5);
 
   // The intensity come from a ASC712 B05 sensor with a sensitivity of 185 mV / A
@@ -404,9 +404,7 @@ void loop() {
 // Cree une chaine de carractere sans signe negatif si proche de zero
 void floatToStr(float val, int width, int prec, char *buf) {
   dtostrf(val, width, prec, buf);
-  // Vérifier si ça finit par "0.0"
-  int len = strlen(buf);
-  if (len >= 3 && strcmp(buf + len - 3, "0.0") == 0) {
+  if (strcmp(buf, "-0.0") == 0) {
     buf[0] = ' ';  // Remplacer le signe par un espace
   }
 }
