@@ -266,8 +266,8 @@ void loop() {
   // calculate P and create strings for lcd display
   char buf_V1[10];
   char buf_V2[10];
-  dtostrf(V1, 4, 1, buf_V1);
-  dtostrf(V2, 4, 1, buf_V2);
+  floatToStr(V1, 4, 1, buf_V1);
+  floatToStr(V2, 4, 1, buf_V2);
 
   char buf_I1[10];
   char buf_I2[10];
@@ -279,8 +279,8 @@ void loop() {
   }
   else{
     P1 = V1 * I1;
-    dtostrf(I1, 4, 1, buf_I1);
-    dtostrf(P1, 4, 1, buf_P1);
+    floatToStr(I1, 4, 1, buf_I1);
+    floatToStr(P1, 4, 1, buf_P1);
   }
   if (isSampling2){
     strcpy(buf_I2, "calib");
@@ -288,8 +288,8 @@ void loop() {
   }
   else{
     P2 = V2 * I2;
-    dtostrf(I2, 4, 1, buf_I2);
-    dtostrf(P2, 4, 1, buf_P2);
+    floatToStr(I2, 4, 1, buf_I2);
+    floatToStr(P2, 4, 1, buf_P2);
   }
   // calculate E
   float dE;
@@ -319,7 +319,7 @@ void loop() {
   if (E1 < 0) {
     abs_e = -abs_e;
   }
-  dtostrf(abs_e, 4, 1, buf_E1);
+  floatToStr(abs_e, 4, 1, buf_E1);
   snprintf(buf_E1, sizeof(buf_E1), "%se%d", buf_E1, exposant);
 
   exposant = 0;
@@ -333,7 +333,7 @@ void loop() {
   if (E2 < 0) {
     abs_e = -abs_e;
   }
-  dtostrf(abs_e, 4, 1, buf_E2);
+  floatToStr(abs_e, 4, 1, buf_E2);
   snprintf(buf_E2, sizeof(buf_E2), "%se%d", buf_E2, exposant);
 
 
@@ -349,6 +349,12 @@ void loop() {
 
     // Construction de la ligne 1 complète
     snprintf(ligne, sizeof(ligne), "%s %s %s %s", "V1", buf_V1, "I1", buf_I1);
+    int len = strlen(ligne);
+    for (int i = len; i < 20; i++) {
+      ligne[i] = ' ';
+    }
+    // Ajouter le caractère de fin de chaîne
+    ligne[20] = '\0';
 
     // Affichage sur le LCD
     lcd.setCursor(0, 0);
@@ -356,12 +362,24 @@ void loop() {
 
     // Construction de la ligne 2 complète
     snprintf(ligne, sizeof(ligne), "%s %s %s %s", "P1", buf_P1, "E1", buf_E1);
+    len = strlen(ligne);
+    for (int i = len; i < 20; i++) {
+      ligne[i] = ' ';
+    }
+    // Ajouter le caractère de fin de chaîne
+    ligne[20] = '\0';
 
     lcd.setCursor(0, 1);
     lcd.print(ligne);
 
     // Construction de la ligne 3 complète
     snprintf(ligne, sizeof(ligne), "%s %s %s %s", "V2", buf_V2, "I2", buf_I2);
+    len = strlen(ligne);
+    for (int i = len; i < 20; i++) {
+      ligne[i] = ' ';
+    }
+    // Ajouter le caractère de fin de chaîne
+    ligne[20] = '\0';
 
     // Affichage sur le LCD
     lcd.setCursor(0, 2);
@@ -369,11 +387,28 @@ void loop() {
 
     // Construction de la ligne 4 complète
     snprintf(ligne, sizeof(ligne), "%s %s %s %s", "P2", buf_P2, "E2", buf_E2);
+    len = strlen(ligne);
+    for (int i = len; i < 20; i++) {
+      ligne[i] = ' ';
+    }
+    // Ajouter le caractère de fin de chaîne
+    ligne[20] = '\0';
 
     lcd.setCursor(0, 3);
     lcd.print(ligne);
   }
   delay(10);
+}
+
+
+// Cree une chaine de carractere sans signe negatif si proche de zero
+void floatToStr(float val, int width, int prec, char *buf) {
+  dtostrf(val, width, prec, buf);
+  // Vérifier si ça finit par "0.0"
+  int len = strlen(buf);
+  if (len >= 3 && strcmp(buf + len - 3, "0.0") == 0) {
+    buf[0] = ' ';  // Remplacer le signe par un espace
+  }
 }
 
 
