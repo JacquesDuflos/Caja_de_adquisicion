@@ -114,9 +114,11 @@ const int Measure1 = 2; // pin del boton de medision 1
 const int Measure2 = 3; // pin del boton de medicion 2
 bool forceRefresh = false;
 
-unsigned long lastDebounceTime = 0;  // the last time the output pin was toggled
+unsigned long lastDebounceTime1 = 0;  // the last time the output pin was toggled
+unsigned long lastDebounceTime2 = 0;  // the last time the output pin was toggled
 unsigned long debounceDelay = 50; 
-unsigned long iPushedTime = 0; // to detect if the i button was manained 
+unsigned long iPushedTime1 = 0; // to detect if the i button was manained
+unsigned long iPushedTime2 = 0; // to detect if the i button was manained
 bool isSampling1 = false; // si se esta calibrando el I1
 bool isSampling2 = false; // si se esta calibrando el I2
 int nSample1 = 0; // the iteration of sample for I1
@@ -196,10 +198,10 @@ void loop() {
   forceRefresh = false;
   int reading = digitalRead(Measure1);
   if (reading != LastM1State){
-    lastDebounceTime = millis();
+    lastDebounceTime1 = millis();
     //Serial.println("Bounce");
   }
-  if ((millis() - lastDebounceTime) > debounceDelay){
+  if ((millis() - lastDebounceTime1) > debounceDelay){
     //Serial.println("long touch");
     if (reading != M1State){
       //Serial.println("button flipped");
@@ -208,12 +210,13 @@ void loop() {
         //
         //Serial.println("BOUTON V TOUCHE");
         //
+        iPushedTime1 = millis();
         forceRefresh = true;
       }
     }
     else{
       // when the state has not changed
-      if ((M1State == HIGH) and ((millis() - iPushedTime) > 1500)){
+      if ((M1State == HIGH) and ((millis() - iPushedTime1) > 1500)){
         //Serial.println("appuy prologe detecte");
         if (not isSampling1){
           //Serial.println("demarrage sampling");
@@ -228,10 +231,10 @@ void loop() {
 
   reading = digitalRead(Measure2);
   if (reading != LastM2State){
-    lastDebounceTime = millis();
+    lastDebounceTime2 = millis();
     //Serial.println("Bounce");
   }
-  if ((millis() - lastDebounceTime) > debounceDelay){
+  if ((millis() - lastDebounceTime2) > debounceDelay){
     //Serial.println("long touch");
     if (reading != M2State){
       //Serial.println("button flipped");
@@ -240,12 +243,13 @@ void loop() {
         //
         //Serial.println("BOUTON V TOUCHE");
         //
+        iPushedTime2 = millis();
         forceRefresh = true;
       }
     }
     else{
       // when the state has not changed
-      if ((M2State == HIGH) and ((millis() - iPushedTime) > 1500)){
+      if ((M2State == HIGH) and ((millis() - iPushedTime2) > 1500)){
         //Serial.println("appuy prologe detecte");
         if (not isSampling2){
           //Serial.println("demarrage sampling");
@@ -273,16 +277,18 @@ void loop() {
     strcpy(buf_I1, "calib");
     strcpy(buf_P1, "calib");
   }
+  else{
+    P1 = V1 * I1;
+    dtostrf(I1, 4, 1, buf_I1);
+    dtostrf(P1, 4, 1, buf_P1);
+  }
   if (isSampling2){
     strcpy(buf_I2, "calib");
     strcpy(buf_P2, "calib");
   }
   else{
-    P1 = V1 * I1;
     P2 = V2 * I2;
-    dtostrf(I1, 4, 1, buf_I1);
     dtostrf(I2, 4, 1, buf_I2);
-    dtostrf(P1, 4, 1, buf_P1);
     dtostrf(P2, 4, 1, buf_P2);
   }
   // calculate E
