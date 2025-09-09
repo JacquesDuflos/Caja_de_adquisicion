@@ -97,7 +97,7 @@ float I2offset = 0; // obtained by calibrating
 float P1; // El poder, calculado a partir del v y i selecionado
 float P2;
 float E1; // la energia, calculada integrando el poder
-float E2;
+float E2; // la energia, calculada integrando el poder
 unsigned long lastTime = 0; // to get the calculate the delta between 2 loops
 
 int M1State; // estado del boton de medision 1 (como Mesure 1 state)
@@ -117,8 +117,6 @@ bool forceRefresh = false;
 unsigned long lastDebounceTime1 = 0;  // the last time the output pin was toggled
 unsigned long lastDebounceTime2 = 0;  // the last time the output pin was toggled
 unsigned long debounceDelay = 50; 
-unsigned long iPushedTime1 = 0; // to detect if the i button was manained
-unsigned long iPushedTime2 = 0; // to detect if the i button was manained
 bool isSampling1 = false; // si se esta calibrando el I1
 bool isSampling2 = false; // si se esta calibrando el I2
 int nSample1 = 0; // the iteration of sample for I1
@@ -261,9 +259,12 @@ void loop() {
       M1State = reading;
       if (M1State == HIGH){
         //
-        //Serial.println("BOUTON V TOUCHE");
+        //Serial.println("BOUTON M1 TOUCHE");
         //
-        iPushedTime1 = millis();
+        E1 = 0;
+        lcd.setCursor(10, 3);
+        lcd.print("resetando ");
+        delay(500);
         forceRefresh = true;
       }
     }
@@ -282,9 +283,12 @@ void loop() {
       M2State = reading;
       if (M2State == HIGH){
         //
-        //Serial.println("BOUTON V TOUCHE");
+        //Serial.println("BOUTON M2 TOUCHE");
         //
-        iPushedTime2 = millis();
+        E2 = 0;
+        lcd.setCursor(10, 1);
+        lcd.print("resetando ");
+        delay(500);
         forceRefresh = true;
       }
     }
@@ -377,7 +381,7 @@ void loop() {
     char ligne[33]; // 32 caractères + \0
 
     // Construction de la ligne 1 complète
-    snprintf(ligne, sizeof(ligne), "%s %s %s %s", "V1", buf_V1, "I1", buf_I1);
+    snprintf(ligne, sizeof(ligne), "%s %s   %s %s", "V1", buf_V1, "I1", buf_I1);
     int len = strlen(ligne);
     for (int i = len; i < 20; i++) {
       ligne[i] = ' ';
@@ -390,7 +394,7 @@ void loop() {
     lcd.print(ligne);
 
     // Construction de la ligne 2 complète
-    snprintf(ligne, sizeof(ligne), "%s %s %s %s", "P1", buf_P1, "E1", buf_E1);
+    snprintf(ligne, sizeof(ligne), "%s %s   %s %s", "P1", buf_P1, "E1", buf_E1);
     len = strlen(ligne);
     for (int i = len; i < 20; i++) {
       ligne[i] = ' ';
@@ -402,7 +406,7 @@ void loop() {
     lcd.print(ligne);
 
     // Construction de la ligne 3 complète
-    snprintf(ligne, sizeof(ligne), "%s %s %s %s", "V2", buf_V2, "I2", buf_I2);
+    snprintf(ligne, sizeof(ligne), "%s %s   %s %s", "V2", buf_V2, "I2", buf_I2);
     len = strlen(ligne);
     for (int i = len; i < 20; i++) {
       ligne[i] = ' ';
@@ -415,7 +419,7 @@ void loop() {
     lcd.print(ligne);
 
     // Construction de la ligne 4 complète
-    snprintf(ligne, sizeof(ligne), "%s %s %s %s", "P2", buf_P2, "E2", buf_E2);
+    snprintf(ligne, sizeof(ligne), "%s %s   %s %s", "P2", buf_P2, "E2", buf_E2);
     len = strlen(ligne);
     for (int i = len; i < 20; i++) {
       ligne[i] = ' ';
