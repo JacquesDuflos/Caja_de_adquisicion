@@ -127,8 +127,76 @@ float sampleI1 = 0; // the sum of samples for I1
 float sampleI2 = 0; // the sum of samples for I2
 const int sampleSize = 50; // the total number of sample
 
-String vegal;
-String iegal;
+byte gear1[] = {
+  B00000,
+  B00100,
+  B11111,
+  B01010,
+  B11111,
+  B00100,
+  B00000,
+  B00000
+};
+byte gear2[] = {
+  B00000,
+  B10010,
+  B01110,
+  B11011,
+  B01110,
+  B01001,
+  B00000,
+  B00000
+};
+byte gear3[] = {
+  B00000,
+  B01001,
+  B11110,
+  B01010,
+  B01111,
+  B10010,
+  B00000,
+  B00000
+};
+byte gear4[] = {
+  B00000,
+  B10100,
+  B01111,
+  B01010,
+  B11110,
+  B00101,
+  B00000,
+  B00000
+};
+byte gear5[] = {
+  B00000,
+  B01001,
+  B01110,
+  B11011,
+  B01110,
+  B10010,
+  B00000,
+  B00000
+};
+byte lightning1[] = {
+  B00100,
+  B00100,
+  B01100,
+  B11111,
+  B00110,
+  B00100,
+  B00100,
+  B00000
+};
+byte lightning2[] = {
+  B00000,
+  B00100,
+  B00100,
+  B01100,
+  B11111,
+  B00110,
+  B00100,
+  B00100
+};
 
 LiquidCrystal_I2C lcd(0x27,  20, 4);
 unsigned long lastRefresh = 0; // Last time the screen was updated
@@ -144,6 +212,15 @@ void setup() {
   lcd.init();
   // turn on the backlight, or not
   lcd.backlight();
+  lcd.createChar(0, gear1);
+  lcd.createChar(1, gear2);
+  lcd.createChar(2, gear3);
+  lcd.createChar(3, gear4);
+  lcd.createChar(4, gear5);
+  lcd.createChar(5, lightning1);
+  lcd.createChar(6, lightning2);
+  splashScreen(2);
+  calibrate(60);
   Serial.println("setup compleat");
 }
 
@@ -164,6 +241,7 @@ void loop() {
   I2_analog = map (I2_analog, 2500, 2685, 0, 1000);
   float I2_unfilter = float(I2_analog)/1000.0;
   
+  /*
   if (isSampling1){
     sampleI1 += I1_unfilter;
     nSample1 ++;
@@ -178,7 +256,11 @@ void loop() {
     //I1 = I1_unfilter;
     //delay(5);
   }
+  */
+  I1_unfilter -= I1offset;
+  I1 = lp1.filt(I1_unfilter);
 
+  /*
   if (isSampling2){
     sampleI2 += I2_unfilter;
     nSample2 ++;
@@ -193,6 +275,9 @@ void loop() {
     //I2 = I2_unfilter;
     //delay(5);
   }
+  */
+  I2_unfilter -= I2offset;
+  I2 = lp2.filt(I2_unfilter);
 
   // Read the buttons
   forceRefresh = false;
@@ -214,7 +299,7 @@ void loop() {
         forceRefresh = true;
       }
     }
-    else{
+    /*else{
       // when the state has not changed
       if ((M1State == HIGH) and ((millis() - iPushedTime1) > 1500)){
         //Serial.println("appuy prologe detecte");
@@ -226,6 +311,7 @@ void loop() {
         }
       }
     }
+    */
   }
   LastM1State = reading;
 
@@ -247,6 +333,7 @@ void loop() {
         forceRefresh = true;
       }
     }
+    /*
     else{
       // when the state has not changed
       if ((M2State == HIGH) and ((millis() - iPushedTime2) > 1500)){
@@ -259,6 +346,7 @@ void loop() {
         }
       }
     }
+    */
   }
   LastM2State = reading;
 
@@ -400,6 +488,97 @@ void loop() {
   delay(10);
 }
 
+
+// Calibrate the ampereters, displaying 
+void calibrate(int nSamples){
+  int I1_analog;
+  float I1_unfilter;
+  int I2_analog;
+  float I2_unfilter;
+  int iSample = 0;
+  int gearIndex = 0;
+  int lightIndex = 5;
+  int loop_size = nSamples / 20;
+  sampleI1 = 0;
+  sampleI2 = 0;
+  if (loop_size < 2){
+    loop_size = 2;
+  }
+  for (int rep = 0; rep < 20; rep++) {   // répéter 20 fois
+    for (int s = 0; s < loop_size; s++) {
+      // The intensity come from a ASC712 B05 sensor with a sensitivity of 185 mV / A
+      // So I map from the 0-1023 to 0-5 then from 2.5 - 2.685 to 0-1A
+      I1_analog = map (analogRead(A2), 0, 1023, 0, 5000);
+      I1_analog = map (I1_analog, 2500, 2685, 0, 1000);
+      I1_unfilter = float(I1_analog)/1000.0;
+      sampleI1 += I1_unfilter;
+      I2_analog =  map (analogRead(A3), 0, 1023, 0, 5000);
+      I2_analog = map (I2_analog, 2500, 2685, 0, 1000);
+      I2_unfilter = float(I2_analog)/1000.0;
+      sampleI2 += I2_unfilter;
+    }
+    lcd.setCursor(5, 2);
+    lcd.print("calibrando");
+    lcd.setCursor(2, 0);
+    lcd.write(lightIndex);
+    lcd.setCursor(2, 1);
+    lcd.write(gearIndex);
+    lcd.setCursor(2, 2);
+    lcd.write(lightIndex);
+    lcd.setCursor(17, 0);
+    lcd.write(lightIndex);
+    lcd.setCursor(17, 1);
+    lcd.write(gearIndex);
+    lcd.setCursor(17, 2);
+    lcd.write(lightIndex);
+    if (lightIndex == 6){
+      lightIndex = 5;
+    }
+    else{
+      lightIndex = 6;
+    }
+    gearIndex++;
+    if (gearIndex > 4){
+      gearIndex = 0;
+    }
+    lcd.setCursor(rep, 3);               // positionner colonne = rep, ligne = 3 (4ème ligne)
+    lcd.write((byte)0xFF);               // écrire un carré noir
+    delay(80);                          // pause pour voir le remplissage
+  }
+  I1offset = sampleI1 / 20 / loop_size;
+  I2offset = sampleI1 / 20 / loop_size;
+  lcd.clear();
+  lcd.setCursor(7,1);
+  lcd.print("listo !");
+  delay(500);
+}
+
+// Displays a welcoming screen 
+void splashScreen(float t){
+/*-------------------¬
+|  z              z  |
+|  o    LUDIX     o  |
+|  z  arrancando  z  |
+|                    |
+-------------------¬*/
+  lcd.setCursor(7, 1);
+  lcd.print("LUDIX");
+  lcd.setCursor(5, 2);
+  lcd.print("arrancando");
+  lcd.setCursor(2, 0);
+  lcd.write(5);
+  lcd.setCursor(2, 1);
+  lcd.write(0);
+  lcd.setCursor(2, 2);
+  lcd.write(5);
+  lcd.setCursor(17, 0);
+  lcd.write(5);
+  lcd.setCursor(17, 1);
+  lcd.write(0);
+  lcd.setCursor(17, 2);
+  lcd.write(5);
+  delay(1000 * t);
+}
 
 // Cree une chaine de carractere sans signe negatif si proche de zero
 void floatToStr(float val, int width, int prec, char *buf) {
