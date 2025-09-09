@@ -241,41 +241,9 @@ void loop() {
   I2_analog = map (I2_analog, 2500, 2685, 0, 1000);
   float I2_unfilter = float(I2_analog)/1000.0;
   
-  /*
-  if (isSampling1){
-    sampleI1 += I1_unfilter;
-    nSample1 ++;
-    if (nSample1 >= sampleSize){
-      I1offset = sampleI1 / sampleSize;
-      isSampling1 = false;
-    }
-  }
-  else{
-    I1_unfilter -= I1offset;
-    I1 = lp1.filt(I1_unfilter);
-    //I1 = I1_unfilter;
-    //delay(5);
-  }
-  */
   I1_unfilter -= I1offset;
   I1 = lp1.filt(I1_unfilter);
 
-  /*
-  if (isSampling2){
-    sampleI2 += I2_unfilter;
-    nSample2 ++;
-    if (nSample2 >= sampleSize){
-      I2offset = sampleI2 / sampleSize;
-      isSampling2 = false;
-    }
-  }
-  else{
-    I2_unfilter -= I2offset;
-    I2 = lp2.filt(I2_unfilter);
-    //I2 = I2_unfilter;
-    //delay(5);
-  }
-  */
   I2_unfilter -= I2offset;
   I2 = lp2.filt(I2_unfilter);
 
@@ -299,19 +267,6 @@ void loop() {
         forceRefresh = true;
       }
     }
-    /*else{
-      // when the state has not changed
-      if ((M1State == HIGH) and ((millis() - iPushedTime1) > 1500)){
-        //Serial.println("appuy prologe detecte");
-        if (not isSampling1){
-          //Serial.println("demarrage sampling");
-          isSampling1 = true;
-          nSample1 = 0;
-          sampleI1 = 0;
-        }
-      }
-    }
-    */
   }
   LastM1State = reading;
 
@@ -333,20 +288,6 @@ void loop() {
         forceRefresh = true;
       }
     }
-    /*
-    else{
-      // when the state has not changed
-      if ((M2State == HIGH) and ((millis() - iPushedTime2) > 1500)){
-        //Serial.println("appuy prologe detecte");
-        if (not isSampling2){
-          //Serial.println("demarrage sampling");
-          isSampling2 = true;
-          nSample2 = 0;
-          sampleI2 = 0;
-        }
-      }
-    }
-    */
   }
   LastM2State = reading;
 
@@ -489,7 +430,7 @@ void loop() {
 }
 
 
-// Calibrate the ampereters, displaying 
+// Calibrate the ampereters, displaying an animation on the screen
 void calibrate(int nSamples){
   int I1_analog;
   float I1_unfilter;
