@@ -199,6 +199,8 @@ byte lightning2[] = {
 LiquidCrystal_I2C lcd(0x27,  20, 4);
 unsigned long lastRefresh = 0; // Last time the screen was updated
 const float refreshPeriode = 0.3; // In seconds, how often the screen is refreshed.
+int clearEveryNPeriods = 10; // the screen will clear every n refresh
+int nPeriods =0; //how many refresh til the last clear
 
 void setup() {
   // Los pins de botones
@@ -372,6 +374,11 @@ void loop() {
 
   if ((millis() - lastRefresh)/1000.0 > refreshPeriode or forceRefresh){
     lastRefresh = millis();
+    nPeriods++;
+    if (nPeriods > clearEveryNPeriods){
+      lcd.clear();
+      nPeriods = 0;
+    }
 
     //send_json();
     send_4_floats();
@@ -476,6 +483,8 @@ void calibrate(int nSamples){
     lcd.write(gearIndex);
     lcd.setCursor(17, 2);
     lcd.write(lightIndex);
+    lcd.setCursor(rep, 3);               // positionner colonne = rep, ligne = 3 (4ème ligne)
+    lcd.write((byte)0xFF);               // écrire un carré noir
     if (lightIndex == 6){
       lightIndex = 5;
     }
@@ -485,14 +494,15 @@ void calibrate(int nSamples){
     gearIndex++;
     if (gearIndex > 4){
       gearIndex = 0;
+      lcd.clear();
     }
-    lcd.setCursor(rep, 3);               // positionner colonne = rep, ligne = 3 (4ème ligne)
-    lcd.write((byte)0xFF);               // écrire un carré noir
     delay(80);                          // pause pour voir le remplissage
   }
   I1offset = sampleI1 / 20 / loop_size;
   I2offset = sampleI1 / 20 / loop_size;
   lcd.clear();
+  lcd.setCursor(7,1);
+  lcd.print("LUDIX");
   lcd.setCursor(7,1);
   lcd.print("listo !");
   delay(500);
@@ -506,6 +516,7 @@ void splashScreen(float t){
 |  z  arrancando  z  |
 |                    |
 -------------------¬*/
+  lcd.clear();
   lcd.setCursor(7, 1);
   lcd.print("LUDIX");
   lcd.setCursor(5, 2);
