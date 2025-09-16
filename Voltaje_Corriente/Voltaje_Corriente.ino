@@ -200,7 +200,9 @@ LiquidCrystal_I2C lcd(0x27,  20, 4);
 unsigned long lastRefresh = 0; // Last time the screen was updated
 const float refreshPeriode = 0.3; // In seconds, how often the screen is refreshed.
 int clearEveryNPeriods = 10; // the screen will clear every n refresh
-int nPeriods =0; //how many refresh til the last clear
+int nPeriods = 0; //how many refresh til the last clear
+int beginRefreshPeriod = 10; // In minuts, how often the lcd.begin methode is called
+unsigned long lastBegin = 0; // las time in milis that has been called lcd.begin methode
 
 void setup() {
   // Los pins de botones
@@ -210,6 +212,7 @@ void setup() {
   Serial.begin(9600);
   // initialize lcd screen
   lcd.init();
+  lcd.begin(20, 4);
   // turn on the backlight, or not
   lcd.backlight();
   lcd.createChar(0, gear1);
@@ -229,7 +232,7 @@ void loop() {
   // the volts are sensed directly by analog input, so 0 to 1023 val are mapped to 0-5v
   V1 = mapfloat (analogRead(A0), 0, 1023, 0, 30);
   //delay(5);
-  V2 = mapfloat (analogRead(A1), 0, 1023, 0, 5);
+  V2 = mapfloat (analogRead(A1), 0, 1023, 0, 10);
   //delay(5);
 
   // The intensity come from a ASC712 B05 sensor with a sensitivity of 185 mV / A
@@ -264,7 +267,7 @@ void loop() {
         //Serial.println("BOUTON M1 TOUCHE");
         //
         E1 = 0;
-        lcd.setCursor(10, 3);
+        lcd.setCursor(10, 1);
         lcd.print("resetando ");
         delay(500);
         forceRefresh = true;
@@ -288,7 +291,7 @@ void loop() {
         //Serial.println("BOUTON M2 TOUCHE");
         //
         E2 = 0;
-        lcd.setCursor(10, 1);
+        lcd.setCursor(10, 3);
         lcd.print("resetando ");
         delay(500);
         forceRefresh = true;
@@ -371,7 +374,6 @@ void loop() {
   floatToStr(abs_e, 4, 1, buf_E2);
   snprintf(buf_E2, sizeof(buf_E2), "%se%d", buf_E2, exposant);
 
-
   if ((millis() - lastRefresh)/1000.0 > refreshPeriode or forceRefresh){
     lastRefresh = millis();
     nPeriods++;
@@ -385,7 +387,7 @@ void loop() {
     // printing to LCD
     //lcd.clear();
     // Buffers pour conversion
-    char ligne[33]; // 32 caractères + \0
+    char ligne[21]; // 32 caractères + \0
 
     // Construction de la ligne 1 complète
     snprintf(ligne, sizeof(ligne), "%s %s   %s %s", "V1", buf_V1, "I1", buf_I1);
@@ -437,6 +439,12 @@ void loop() {
     lcd.setCursor(0, 3);
     lcd.print(ligne);
   }
+  /*
+  if (millis() - lastBegin > beginRefreshPeriod * 1000 * 60){
+    lastBegin = millis();
+    lcd.begin(20, 4);
+  }
+  */
   delay(10);
 }
 
