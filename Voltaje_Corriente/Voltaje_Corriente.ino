@@ -84,8 +84,8 @@ class LowPass
 };
 
 // Filter instance
-LowPass<2> lp1(4,1e3,true);
-LowPass<2> lp2(4,1e3,true);
+LowPass<2> lp1(50,1e3,true);
+LowPass<2> lp2(50,1e3,true);
 
 
 float V1; // Value of the 1st voltmeter (0-5 v) // EL valor detectado por le voltimetro 1
@@ -206,8 +206,8 @@ unsigned long lastBegin = 0; // las time in milis that has been called lcd.begin
 
 void setup() {
   // Los pins de botones
-  pinMode(Measure1, INPUT);
-  pinMode(Measure2, INPUT);
+  pinMode(Measure1, INPUT_PULLUP);
+  pinMode(Measure2, INPUT_PULLUP);
   // Start serial comunication
   Serial.begin(9600);
   // initialize lcd screen
@@ -243,9 +243,16 @@ void loop() {
   int I2_analog =  map (analogRead(A3), 0, 1023, 0, 5000);
   I2_analog = map (I2_analog, 2500, 2685, 0, 1000);
   float I2_unfilter = float(I2_analog)/1000.0;
+  Serial.print(I2_unfilter);
+  Serial.print(",");
+  Serial.print(I2_unfilter-I1offset);
   
   I1_unfilter -= I1offset;
   I1 = lp1.filt(I1_unfilter);
+  Serial.print(",");
+  Serial.print(I1);
+
+  Serial.println();
 
   I2_unfilter -= I2offset;
   I2 = lp2.filt(I2_unfilter);
@@ -383,7 +390,7 @@ void loop() {
     }
 
     //send_json();
-    send_4_floats();
+    //send_4_floats();
     // printing to LCD
     //lcd.clear();
     // Buffers pour conversion
