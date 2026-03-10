@@ -260,33 +260,44 @@ void loop() {
 
   // Conversion énergie en notation scientifique : 3 chiffres de mantisse + exposant
   // Exemple : 3.48e+08
-  int exposant = 0;
   float abs_e = fabs(E1);
+  int exposant = 0;
+  if (abs_e > 100000){
 
-  while (abs_e >= 10.0) {
-    abs_e /= 10.0;
-    exposant++;
+    while (abs_e >= 10.0) {
+      abs_e /= 10.0;
+      exposant++;
+    }
+
+    if (E1 < 0) {
+      abs_e = -abs_e;
+    }
+    floatToStr(abs_e, 4, 1, buf_E1);
+    snprintf(buf_E1, sizeof(buf_E1), "%se%d", buf_E1, exposant);
   }
-
-  if (E1 < 0) {
-    abs_e = -abs_e;
+  else{
+    floatToStr(E1, 4, 2, buf_E1);
   }
-  floatToStr(abs_e, 4, 1, buf_E1);
-  snprintf(buf_E1, sizeof(buf_E1), "%se%d", buf_E1, exposant);
+  
 
-  exposant = 0;
   abs_e = fabs(E2);
 
-  while (abs_e >= 10.0) {
-    abs_e /= 10.0;
-    exposant++;
-  }
+  exposant = 0;
+  if (abs_e > 100000){
+    while (abs_e >= 10.0) {
+      abs_e /= 10.0;
+      exposant++;
+    }
 
-  if (E2 < 0) {
-    abs_e = -abs_e;
+    if (E2 < 0) {
+      abs_e = -abs_e;
+    }
+    floatToStr(abs_e, 4, 1, buf_E2);
+    snprintf(buf_E2, sizeof(buf_E2), "%se%d", buf_E2, exposant);
   }
-  floatToStr(abs_e, 4, 1, buf_E2);
-  snprintf(buf_E2, sizeof(buf_E2), "%se%d", buf_E2, exposant);
+  else{
+    floatToStr(E2, 4, 2, buf_E2);
+  }
 
   if ((millis() - lastRefresh)/1000.0 > refreshPeriode or forceRefresh){
     lastRefresh = millis();
