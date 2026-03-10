@@ -154,27 +154,15 @@ void loop() {
   // The intensity come from a ASC712 B05 sensor with a sensitivity of 185 mV / A
   // So I map from the 0-1023 to 0-5 then from 2.5 - 2.685 to 0-1A
   float I1_mean = promedio(50, Imetro1);
-/*  Serial.print(I1_mean);
-  Serial.print(",");
-  Serial.print(analogRead(Imetro1));*/
-  int I1_analog = map (I1_mean, 0, 1023, 0, 5000);
-  I1_analog = map (I1_analog, 2500, 2685, 0, 1000);
-  float I1_unfilter = float(I1_analog)/1000.0;
+  float I1_analog = I1_mean / 1023 * 5;
+  I1_analog = (I1_analog - 2.5) / 0.185 * 1;
   float I2_mean = promedio(50, Imetro2);
-/*  Serial.print(",");
-  Serial.print(I2_mean);
-  Serial.print(",");
-  Serial.print(analogRead(Imetro2));
-  Serial.println();*/
-  int I2_analog =  map (I2_mean, 0, 1023, 0, 5000);
-  I2_analog = map (I2_analog, 2500, 2685, 0, 1000);
-  float I2_unfilter = float(I2_analog)/1000.0;
+  float I2_analog =  I2_mean / 1023 * 5;
+  I2_analog = (I2_analog - 2.5) / 0.185 * 1;
   
-  I1_unfilter -= I1offset;
-  I1 = I1_unfilter;
+  I1 = I1_analog - I1offset;
 
-  I2_unfilter -= I2offset;
-  I2 = I2_unfilter;
+  I2 = I2_analog - I2offset;
 
   // Read the buttons
   forceRefresh = false;
@@ -392,16 +380,8 @@ void calibrate(int nSamples){
   }
   for (int rep = 0; rep < 20; rep++) {   // répéter 20 fois
     for (int s = 0; s < loop_size; s++) {
-      // The intensity come from a ASC712 B05 sensor with a sensitivity of 185 mV / A
-      // So I map from the 0-1023 to 0-5 then from 2.5 - 2.685 to 0-1A
-      I1_analog = map (analogRead(A2), 0, 1023, 0, 5000);
-      I1_analog = map (I1_analog, 2500, 2685, 0, 1000);
-      I1_unfilter = float(I1_analog)/1000.0;
-      sampleI1 += I1_unfilter;
-      I2_analog =  map (analogRead(A3), 0, 1023, 0, 5000);
-      I2_analog = map (I2_analog, 2500, 2685, 0, 1000);
-      I2_unfilter = float(I2_analog)/1000.0;
-      sampleI2 += I2_unfilter;
+      sampleI1 += analogRead(Imetro1);
+      sampleI2 += analogRead(Imetro2);
     }
     lcd.setCursor(5, 2);
     lcd.print("calibrando");
@@ -432,8 +412,16 @@ void calibrate(int nSamples){
     }
     delay(80);                          // pause pour voir le remplissage
   }
-  I1offset = sampleI1 / 20 / loop_size;
-  I2offset = sampleI1 / 20 / loop_size;
+  I1offset = sampleI1 / (20 * loop_size);
+  I1offset = I1offset / 1023 * 5;
+  I1offset = (I1offset - 2.5) / 0.185 * 1;
+  Serial.print(I1offset);
+  Serial.print(",");
+  I2offset = sampleI2 / (20 * loop_size);
+  I2offset = I2offset / 1023 * 5;
+  I2offset = (I2offset - 2.5) / 0.185 * 1;
+  Serial.print(I2offset);
+  Serial.print(",");
   lcd.clear();
   lcd.setCursor(7,1);
   lcd.print("LUDIX");
