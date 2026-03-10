@@ -408,7 +408,7 @@ void calibrate(int nSamples){
     gearIndex++;
     if (gearIndex > 4){
       gearIndex = 0;
-      lcd.clear();
+      //lcd.clear();
     }
     delay(80);                          // pause pour voir le remplissage
   }
@@ -441,13 +441,14 @@ float promedio(int nSamples, int pin){
 }
 
 // Displays a welcoming screen 
-void splashScreen(float t){
 /*-------------------¬
 |  z              z  |
 |  o    LUDIX     o  |
 |  z  arrancando  z  |
 |                    |
 -------------------¬*/
+void splashScreen(float t){
+
   lcd.clear();
   lcd.setCursor(7, 1);
   lcd.print("LUDIX");
@@ -473,6 +474,12 @@ void floatToStr(float val, int width, int prec, char *buf) {
   dtostrf(val, width, prec, buf);
   if (strcmp(buf, "-0.0") == 0) {
     buf[0] = ' ';  // Remplacer le signe par un espace
+  }
+  // Si le nombre est positif, decaler la chaine et ajouter un espace
+  if (val >= 0) {
+    int len = strlen(buf);
+    memmove(buf + 1, buf, len + 1);  // +1 pour copier aussi le '\0'
+    buf[0] = ' ';
   }
 }
 
