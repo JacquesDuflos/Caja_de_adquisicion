@@ -2,90 +2,6 @@
 #include <Wire.h>
 #include <stdio.h>
 
-template <int order> // order is 1 or 2
-class LowPass
-{
-  private:
-    float a[order];
-    float b[order+1];
-    float omega0;
-    float dt;
-    bool adapt;
-    float tn1 = 0;
-    float x[order+1]; // Raw values
-    float y[order+1]; // Filtered values
-
-  public:  
-    LowPass(float f0, float fs, bool adaptive){
-      // f0: cutoff frequency (Hz)
-      // fs: sample frequency (Hz)
-      // adaptive: boolean flag, if set to 1, the code will automatically set
-      // the sample frequency based on the time history.
-      
-      omega0 = 6.28318530718*f0;
-      dt = 1.0/fs;
-      adapt = adaptive;
-      tn1 = -dt;
-      for(int k = 0; k < order+1; k++){
-        x[k] = 0;
-        y[k] = 0;        
-      }
-      setCoef();
-    }
-
-    void setCoef(){
-      if(adapt){
-        float t = micros()/1.0e6;
-        dt = t - tn1;
-        tn1 = t;
-      }
-      
-      float alpha = omega0*dt;
-      if(order==1){
-        a[0] = -(alpha - 2.0)/(alpha+2.0);
-        b[0] = alpha/(alpha+2.0);
-        b[1] = alpha/(alpha+2.0);        
-      }
-      if(order==2){
-        float alphaSq = alpha*alpha;
-        float beta[] = {1, sqrt(2), 1};
-        float D = alphaSq*beta[0] + 2*alpha*beta[1] + 4*beta[2];
-        b[0] = alphaSq/D;
-        b[1] = 2*b[0];
-        b[2] = b[0];
-        a[0] = -(2*alphaSq*beta[0] - 8*beta[2])/D;
-        a[1] = -(beta[0]*alphaSq - 2*beta[1]*alpha + 4*beta[2])/D;      
-      }
-    }
-
-    float filt(float xn){
-      // Provide me with the current raw value: x
-      // I will give you the current filtered value: y
-      if(adapt){
-        setCoef(); // Update coefficients if necessary      
-      }
-      y[0] = 0;
-      x[0] = xn;
-      // Compute the filtered values
-      for(int k = 0; k < order; k++){
-        y[0] += a[k]*y[k+1] + b[k]*x[k];
-      }
-      y[0] += b[order]*x[order];
-
-      // Save the historical values
-      for(int k = order; k > 0; k--){
-        y[k] = y[k-1];
-        x[k] = x[k-1];
-      }
-  
-      // Return the filtered value    
-      return y[0];
-    }
-};
-
-// Filter instance
-LowPass<2> lp1(50,1e3,true);
-LowPass<2> lp2(50,1e3,true);
 
 
 float V1; // Value of the 1st voltmeter (0-5 v) // EL valor detectado por le voltimetro 1
@@ -223,7 +139,7 @@ void setup() {
   lcd.createChar(5, lightning1);
   lcd.createChar(6, lightning2);
   splashScreen(2);
-  calibrate(60);
+  calibrate(600);
   Serial.println("setup compleat");
 }
 
@@ -237,25 +153,28 @@ void loop() {
 
   // The intensity come from a ASC712 B05 sensor with a sensitivity of 185 mV / A
   // So I map from the 0-1023 to 0-5 then from 2.5 - 2.685 to 0-1A
-  int I1_analog = map (analogRead(A2), 0, 1023, 0, 5000);
+  float I1_mean = promedio(50, Imetro1);
+/*  Serial.print(I1_mean);
+  Serial.print(",");
+  Serial.print(analogRead(Imetro1));*/
+  int I1_analog = map (I1_mean, 0, 1023, 0, 5000);
   I1_analog = map (I1_analog, 2500, 2685, 0, 1000);
   float I1_unfilter = float(I1_analog)/1000.0;
-  int I2_analog =  map (analogRead(A3), 0, 1023, 0, 5000);
+  float I2_mean = promedio(50, Imetro2);
+/*  Serial.print(",");
+  Serial.print(I2_mean);
+  Serial.print(",");
+  Serial.print(analogRead(Imetro2));
+  Serial.println();*/
+  int I2_analog =  map (I2_mean, 0, 1023, 0, 5000);
   I2_analog = map (I2_analog, 2500, 2685, 0, 1000);
   float I2_unfilter = float(I2_analog)/1000.0;
-  Serial.print(I2_unfilter);
-  Serial.print(",");
-  Serial.print(I2_unfilter-I1offset);
   
   I1_unfilter -= I1offset;
-  I1 = lp1.filt(I1_unfilter);
-  Serial.print(",");
-  Serial.print(I1);
-
-  Serial.println();
+  I1 = I1_unfilter;
 
   I2_unfilter -= I2offset;
-  I2 = lp2.filt(I2_unfilter);
+  I2 = I2_unfilter;
 
   // Read the buttons
   forceRefresh = false;
@@ -324,7 +243,7 @@ void loop() {
   }
   else{
     P1 = V1 * I1;
-    floatToStr(I1, 4, 1, buf_I1);
+    floatToStr(I1, 4, 2, buf_I1);
     floatToStr(P1, 4, 1, buf_P1);
   }
   if (isSampling2){
@@ -333,7 +252,7 @@ void loop() {
   }
   else{
     P2 = V2 * I2;
-    floatToStr(I2, 4, 1, buf_I2);
+    floatToStr(I2, 4, 2, buf_I2);
     floatToStr(P2, 4, 1, buf_P2);
   }
   // calculate E
@@ -521,6 +440,16 @@ void calibrate(int nSamples){
   lcd.setCursor(7,1);
   lcd.print("listo !");
   delay(500);
+}
+
+// Returns the mean of the next "nSamples" values read on the "pin" analog pin
+float promedio(int nSamples, int pin){
+  int q = 0;
+  for(int i = 0; i < nSamples; i++){
+    q += analogRead(pin);
+  }
+  int mean = (float)q/nSamples;
+  return mean;
 }
 
 // Displays a welcoming screen 
