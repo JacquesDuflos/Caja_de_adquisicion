@@ -308,9 +308,9 @@ void loop() {
     }
 
     //send_json();
-    //send_4_floats();
+    send_4_floats();
     // printing to LCD
-    //lcd.clear();
+    
     // Buffers pour conversion
     char ligne[21]; // 32 caractères + \0
 
