@@ -303,7 +303,7 @@ void loop() {
     lastRefresh = millis();
     nPeriods++;
     if (nPeriods > clearEveryNPeriods){
-      lcd.clear();
+      //lcd.clear();
       nPeriods = 0;
     }
 
