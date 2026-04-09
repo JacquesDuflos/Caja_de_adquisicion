@@ -446,6 +446,7 @@ float promedio(int nSamples, int pin){
   int q = 0;
   for(int i = 0; i < nSamples; i++){
     q += analogRead(pin);
+    delay(10);
   }
   int mean = (float)q/nSamples;
   return mean;
@@ -454,7 +455,7 @@ float promedio(int nSamples, int pin){
 // Displays a welcoming screen 
 /*-------------------¬
 |  z              z  |
-|  o    LUDICX     o  |
+|  o    LUDICX    o  |
 |  z  arrancando  z  |
 |                    |
 -------------------¬*/
