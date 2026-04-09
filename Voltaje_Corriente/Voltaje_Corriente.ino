@@ -4,8 +4,8 @@
 
 
 
-float V1; // Value of the 1st voltmeter (0-5 v) // EL valor detectado por le voltimetro 1
-float V2; // Value of the 2nd voltmeter (0-30 v) // EL valor detectado por el voltimetro 2
+float V1; // Value of the 1st voltmeter (0-25 v) // EL valor detectado por le voltimetro 1
+float V2; // Value of the 2nd voltmeter (0-5 v) // EL valor detectado por el voltimetro 2
 float I1; // El valor detectado por el voltimetro 1
 float I1offset = 0; // obtained by calibrating
 float I2; // El valor detectado por el voltimitro 2
@@ -22,8 +22,8 @@ int M2State; // estado del boton de medision 2 (como Mesure 2 state)
 int LastM1State = LOW; // estado presednete del boton de measure 1
 int LastM2State = LOW; // estado presedente del boton de measure 2
 
-const int Vmetro1 = A0; // pin del voltimetro 1
-const int Vmetro2 = A1; // pin del voltimetro 2
+const int Vmetro1 = A1; // pin del voltimetro 1
+const int Vmetro2 = A2; // pin del voltimetro 2
 const int Imetro1 = A2; // pin del amperimetro 1
 const int Imetro2 = A3; // pin del amperimetro 2
 const int Measure1 = 2; // pin del boton de medision 1
@@ -146,9 +146,9 @@ void setup() {
 void loop() {
   // Getting the infos
   // the volts are sensed directly by analog input, so 0 to 1023 val are mapped to 0-5v
-  V1 = mapfloat (analogRead(A0), 0, 1023, 0, 10);
+  V1 = mapfloat (analogRead(A0), 0, 1023, 0, 30);
   //delay(5);
-  V2 = mapfloat (analogRead(A1), 0, 1023, 0, 30);
+  V2 = mapfloat (analogRead(A1), 0, 1023, 0, 10);
   //delay(5);
 
   // The intensity come from a ASC712 B05 sensor with a sensitivity of 185 mV / A
