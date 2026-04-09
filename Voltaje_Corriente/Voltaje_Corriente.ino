@@ -426,16 +426,16 @@ void calibrate(int nSamples){
   I1offset = sampleI1 / (20 * loop_size);
   I1offset = I1offset / 1023 * 5;
   I1offset = (I1offset - 2.5) / 0.185 * 1;
-  Serial.print(I1offset);
-  Serial.print(",");
+  //Serial.print(I1offset);
+  //Serial.print(",");
   I2offset = sampleI2 / (20 * loop_size);
   I2offset = I2offset / 1023 * 5;
   I2offset = (I2offset - 2.5) / 0.185 * 1;
-  Serial.print(I2offset);
-  Serial.print(",");
+  //Serial.print(I2offset);
+  //Serial.print(",");
   lcd.clear();
   lcd.setCursor(7,1);
-  lcd.print("LUDIX");
+  lcd.print("LUDICX");
   lcd.setCursor(7,1);
   lcd.print("listo !");
   delay(500);
@@ -454,7 +454,7 @@ float promedio(int nSamples, int pin){
 // Displays a welcoming screen 
 /*-------------------¬
 |  z              z  |
-|  o    LUDIX     o  |
+|  o    LUDICX     o  |
 |  z  arrancando  z  |
 |                    |
 -------------------¬*/
@@ -462,7 +462,7 @@ void splashScreen(float t){
 
   lcd.clear();
   lcd.setCursor(7, 1);
-  lcd.print("LUDIX");
+  lcd.print("LUDICX");
   lcd.setCursor(5, 2);
   lcd.print("arrancando");
   lcd.setCursor(2, 0);
