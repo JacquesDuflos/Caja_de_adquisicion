@@ -23,7 +23,7 @@ int LastM1State = LOW; // estado presednete del boton de measure 1
 int LastM2State = LOW; // estado presedente del boton de measure 2
 
 const int Vmetro1 = A1; // pin del voltimetro 1
-const int Vmetro2 = A2; // pin del voltimetro 2
+const int Vmetro2 = A0; // pin del voltimetro 2
 const int Imetro1 = A2; // pin del amperimetro 1
 const int Imetro2 = A3; // pin del amperimetro 2
 const int Measure1 = 2; // pin del boton de medision 1
@@ -115,6 +115,7 @@ byte lightning2[] = {
 LiquidCrystal_I2C lcd(0x27,  20, 4);
 unsigned long lastRefresh = 0; // Last time the screen was updated
 const float refreshPeriode = 0.3; // In seconds, how often the screen is refreshed.
+const uint8_t header = 0xAA;
 int clearEveryNPeriods = 10; // the screen will clear every n refresh
 int nPeriods = 0; //how many refresh til the last clear
 int beginRefreshPeriod = 10; // In minuts, how often the lcd.begin methode is called
@@ -146,9 +147,9 @@ void setup() {
 void loop() {
   // Getting the infos
   // the volts are sensed directly by analog input, so 0 to 1023 val are mapped to 0-5v
-  V1 = mapfloat (analogRead(A0), 0, 1023, 0, 30);
+  V1 = mapfloat (analogRead(Vmetro1), 0, 1023, 0, 30);
   //delay(5);
-  V2 = mapfloat (analogRead(A1), 0, 1023, 0, 10);
+  V2 = mapfloat (analogRead(Vmetro2), 0, 1023, 0, 10);
   //delay(5);
 
   // The intensity come from a ASC712 B05 sensor with a sensitivity of 185 mV / A
@@ -503,6 +504,7 @@ void send_4_floats()
   float valeurs[4] = {V1, V2, I1, I2};
 
   // Envoyer les 16 octets directement
+  Serial.write(header);
   Serial.write((uint8_t*)valeurs, sizeof(valeurs));
 }
 
