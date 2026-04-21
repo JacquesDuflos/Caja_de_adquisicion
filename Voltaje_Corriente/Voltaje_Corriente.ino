@@ -424,14 +424,14 @@ void calibrate(int nSamples){
     }
     delay(80);                          // pause pour voir le remplissage
   }
-  I1offset = sampleI1 / (20 * loop_size);
-  I1offset = I1offset / 1023 * 5;
-  I1offset = (I1offset - 2.5) / 0.185 * 1;
+  I1offset = sampleI1 / (20.0 * float(loop_size));
+  I1offset = I1offset / 1023.0 * 5.0;
+  I1offset = (I1offset - 2.5) / 0.185 * 1.0;
   //Serial.print(I1offset);
   //Serial.print(",");
-  I2offset = sampleI2 / (20 * loop_size);
-  I2offset = I2offset / 1023 * 5;
-  I2offset = (I2offset - 2.5) / 0.185 * 1;
+  I2offset = sampleI2 / (20.0 * float(loop_size));
+  I2offset = I2offset / 1023.0 * 5.0;
+  I2offset = (I2offset - 2.5) / 0.185 * 1.0;
   //Serial.print(I2offset);
   //Serial.print(",");
   lcd.clear();
