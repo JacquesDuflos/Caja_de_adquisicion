@@ -40,6 +40,7 @@ int nSample2 = 0; // the itaration of sample for I2
 float sampleI1 = 0; // the sum of samples for I1
 float sampleI2 = 0; // the sum of samples for I2
 const int sampleSize = 50; // the total number of sample
+const float iThreashold = 0.035;
 
 byte gear1[] = {
   B00000,
@@ -164,11 +165,11 @@ void loop() {
   I1 = I1_analog - I1offset;
 
   I2 = I2_analog - I2offset;
-  if(I1 < 0.035)
+  if(I1 < iThreashold)
   {
     I1 = 0.0;
   }
-  if(I2 < 0.035)
+  if(I2 < iThreashold)
   {
     I2 = 0.0;
   }
