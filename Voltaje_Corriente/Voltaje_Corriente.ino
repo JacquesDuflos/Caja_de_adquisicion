@@ -164,6 +164,14 @@ void loop() {
   I1 = I1_analog - I1offset;
 
   I2 = I2_analog - I2offset;
+  if(I1 < 0.035)
+  {
+    I1 = 0.0;
+  }
+  if(I2 < 0.035)
+  {
+    I2 = 0.0;
+  }
 
   // Read the buttons
   forceRefresh = false;
