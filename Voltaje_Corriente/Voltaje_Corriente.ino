@@ -186,7 +186,7 @@ void loop() {
     if (reading != M1State){
       //Serial.println("button flipped");
       M1State = reading;
-      if (M1State == HIGH){
+      if (M1State == LOW){
         //
         //Serial.println("BOUTON M1 TOUCHE");
         //
@@ -210,7 +210,7 @@ void loop() {
     if (reading != M2State){
       //Serial.println("button flipped");
       M2State = reading;
-      if (M2State == HIGH){
+      if (M2State == LOW){
         //
         //Serial.println("BOUTON M2 TOUCHE");
         //
