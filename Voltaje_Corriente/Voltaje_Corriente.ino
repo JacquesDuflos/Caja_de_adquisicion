@@ -23,7 +23,9 @@ int LastM1State = LOW; // estado presednete del boton de measure 1
 int LastM2State = LOW; // estado presedente del boton de measure 2
 
 const int Vmetro1 = A1; // pin del voltimetro 1
+const float V1max = 30.0; // el valor maximo medible a partir de cual se indicara FR(fuera de rango)
 const int Vmetro2 = A0; // pin del voltimetro 2
+const float V2max = 10.0; // el valor maximo medible a partir de cual se indicara FR(fuera de rango)
 const int Imetro1 = A2; // pin del amperimetro 1
 const int Imetro2 = A3; // pin del amperimetro 2
 const int Measure1 = 2; // pin del boton de medision 1
@@ -148,9 +150,9 @@ void setup() {
 void loop() {
   // Getting the infos
   // the volts are sensed directly by analog input, so 0 to 1023 val are mapped to 0-5v
-  V1 = mapfloat (analogRead(Vmetro1), 0, 1023, 0, 30);
+  V1 = mapfloat (analogRead(Vmetro1), 0, 1023, 0, V1max);
   //delay(5);
-  V2 = mapfloat (analogRead(Vmetro2), 0, 1023, 0, 10);
+  V2 = mapfloat (analogRead(Vmetro2), 0, 1023, 0, V2max);
   //delay(5);
 
   // The intensity come from a ASC712 B05 sensor with a sensitivity of 185 mV / A
@@ -224,13 +226,27 @@ void loop() {
   }
   LastM2State = reading;
 
-
-  // calculate P and create strings for lcd display
+  // Displays V values
   char buf_V1[10];
   char buf_V2[10];
-  floatToStr(V1, 4, 1, buf_V1);
-  floatToStr(V2, 4, 1, buf_V2);
+  if (V1 == V1max)
+  {
+    strcpy(buf_V1, "  F/R");
+  }
+  else
+  {
+    floatToStr(V1, 4, 1, buf_V1);
+  }
+  if (V2 == V2max)
+  {
+    strcpy(buf_V2, "  F/R");
+  }
+  else
+  {
+    floatToStr(V2, 4, 1, buf_V2);
+  }
 
+  // calculate P and create strings for lcd display
   char buf_I1[10];
   char buf_I2[10];
   char buf_P1[10];
