@@ -155,10 +155,10 @@ void loop() {
 
   // The intensity come from a ASC712 B05 sensor with a sensitivity of 185 mV / A
   // So I map from the 0-1023 to 0-5 then from 2.5 - 2.685 to 0-1A
-  float I1_mean = promedio(50, Imetro1);
+  float I1_mean = promedio(10, Imetro1);
   float I1_analog = I1_mean / 1023 * 5;
   I1_analog = (I1_analog - 2.5) / 0.185 * 1;
-  float I2_mean = promedio(50, Imetro2);
+  float I2_mean = promedio(10, Imetro2);
   float I2_analog =  I2_mean / 1023 * 5;
   I2_analog = (I2_analog - 2.5) / 0.185 * 1;
   
