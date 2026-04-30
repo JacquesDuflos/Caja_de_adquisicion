@@ -9,9 +9,7 @@ Adafruit_INA219 ina2(0x41);
 float V1; // Value of the 1st voltmeter (0-25 v) // EL valor detectado por le voltimetro 1
 float V2; // Value of the 2nd voltmeter (0-5 v) // EL valor detectado por el voltimetro 2
 float I1; // El valor detectado por el voltimetro 1
-float I1offset = 0; // obtained by calibrating
 float I2; // El valor detectado por el voltimitro 2
-float I2offset = 0; // obtained by calibrating
 float P1; // El poder, calculado a partir del v y i selecionado
 float P2;
 float E1; // la energia, calculada integrando el poder
@@ -24,12 +22,8 @@ int M2State; // estado del boton de medision 2 (como Mesure 2 state)
 int LastM1State = LOW; // estado presednete del boton de measure 1
 int LastM2State = LOW; // estado presedente del boton de measure 2
 
-const int Vmetro1 = A1; // pin del voltimetro 1
 const float V1max = 26.0; // el valor maximo medible a partir de cual se indicara FR(fuera de rango)
-const int Vmetro2 = A0; // pin del voltimetro 2
 const float V2max = 26.0; // el valor maximo medible a partir de cual se indicara FR(fuera de rango)
-const int Imetro1 = A2; // pin del amperimetro 1
-const int Imetro2 = A3; // pin del amperimetro 2
 const int Measure1 = 2; // pin del boton de medision 1
 const int Measure2 = 3; // pin del boton de medicion 2
 bool forceRefresh = false;
@@ -37,14 +31,7 @@ bool forceRefresh = false;
 unsigned long lastDebounceTime1 = 0;  // the last time the output pin was toggled
 unsigned long lastDebounceTime2 = 0;  // the last time the output pin was toggled
 unsigned long debounceDelay = 50; 
-bool isSampling1 = false; // si se esta calibrando el I1
-bool isSampling2 = false; // si se esta calibrando el I2
-int nSample1 = 0; // the iteration of sample for I1
-int nSample2 = 0; // the itaration of sample for I2
-float sampleI1 = 0; // the sum of samples for I1
-float sampleI2 = 0; // the sum of samples for I2
-const int sampleSize = 50; // the total number of sample
-const float iThreashold = 0.035;
+const float iThreashold = 0.002;
 
 byte gear1[] = {
   B00000,
@@ -153,7 +140,6 @@ void setup() {
     Serial.println("Failed to find INA219 2 chip");
     while (1) { delay(10); }
   }
-  //calibrate(600);
   Serial.println("setup compleat");
 }
 
@@ -183,37 +169,22 @@ void loop() {
   power_mW2 = ina2.getPower_mW();
   loadvoltage2 = busvoltage2 + (shuntvoltage2 / 1000);
 
-  // the volts are sensed directly by analog input, so 0 to 1023 val are mapped to 0-5v
-  //V1 = mapfloat (analogRead(Vmetro1), 0, 1023, 0, V1max);
-  V1 = busvoltage1;
-  //delay(5);
-  //V2 = mapfloat (analogRead(Vmetro2), 0, 1023, 0, V2max);
-  V2 = busvoltage2;
-  //delay(5);
-
-  // The intensity come from a ASC712 B05 sensor with a sensitivity of 185 mV / A
-  // So I map from the 0-1023 to 0-5 then from 2.5 - 2.685 to 0-1A
-  //float I1_mean = promedio(10, Imetro1);
-  //float I1_analog = I1_mean / 1023 * 5;
-  //I1_analog = (I1_analog - 2.5) / 0.185 * 1;
-  //float I2_mean = promedio(10, Imetro2);
-  //float I2_analog =  I2_mean / 1023 * 5;
-  //I2_analog = (I2_analog - 2.5) / 0.185 * 1;
   
-  //I1 = I1_analog - I1offset;
-  I1 = current_mA1;
+  V1 = busvoltage1;
+  V2 = busvoltage2;
 
-  //I2 = I2_analog - I2offset;
-  I2 = current_mA2;
+  // The intensity come from a INA219, so it is in mA, I convert to A
+  I1 = current_mA1 / 1000.0;
+  I2 = current_mA2 / 1000.0;
 
-  //if(I1 < iThreashold)
-  //{
-  //  I1 = 0.0;
-  //}
-  //if(I2 < iThreashold)
-  //{
-  //  I2 = 0.0;
-  //}
+  if(I1 < iThreashold)
+  {
+    I1 = 0.0;
+  }
+  if(I2 < iThreashold)
+  {
+    I2 = 0.0;
+  }
 
   // Read the buttons
   forceRefresh = false;
@@ -285,36 +256,20 @@ void loop() {
     floatToStr(V2, 4, 1, buf_V2);
   }
 
-  // calculate P and create strings for lcd display
+  // Get P and create strings for lcd display
   char buf_I1[10];
   char buf_I2[10];
   char buf_P1[10];
   char buf_P2[10];
-  //if (isSampling1){
-  //  strcpy(buf_I1, "calib");
-  //  strcpy(buf_P1, "calib");
-  //}
-  //else{
-  //  P1 = V1 * I1;
-  //  floatToStr(I1, 4, 2, buf_I1);
-  //  floatToStr(P1, 4, 1, buf_P1);
-  //}
-  //if (isSampling2){
-  //  strcpy(buf_I2, "calib");
-  //  strcpy(buf_P2, "calib");
-  //}
-  //else{
-  //  P2 = V2 * I2;
-  //  floatToStr(I2, 4, 2, buf_I2);
-  //  floatToStr(P2, 4, 1, buf_P2);
-  //}
-  P1 = power_mW1;
-  floatToStr(I1, 4, 2, buf_I1);
-  floatToStr(P1, 4, 1, buf_P1);
 
-  P2 = power_mW2;
-  floatToStr(I2, 4, 2, buf_I2);
-  floatToStr(P2, 4, 1, buf_P2);
+  // Power from INA219 is in mW, I convert to W
+  P1 = power_mW1 / 1000.0;
+  floatToStr(I1, 4, 3, buf_I1);
+  floatToStr(P1, 4, 2, buf_P1);
+
+  P2 = power_mW2 / 1000.0;
+  floatToStr(I2, 4, 3, buf_I2);
+  floatToStr(P2, 4, 2, buf_P2);
 
   // calculate E
   float dE;
@@ -443,73 +398,6 @@ void loop() {
   delay(10);
 }
 
-
-// Calibrate the ampereters, displaying an animation on the screen
-void calibrate(int nSamples){
-  int I1_analog;
-  float I1_unfilter;
-  int I2_analog;
-  float I2_unfilter;
-  int iSample = 0;
-  int gearIndex = 0;
-  int lightIndex = 5;
-  int loop_size = nSamples / 20;
-  sampleI1 = 0;
-  sampleI2 = 0;
-  if (loop_size < 2){
-    loop_size = 2;
-  }
-  for (int rep = 0; rep < 20; rep++) {   // répéter 20 fois
-    for (int s = 0; s < loop_size; s++) {
-      sampleI1 += analogRead(Imetro1);
-      sampleI2 += analogRead(Imetro2);
-    }
-    lcd.setCursor(5, 2);
-    lcd.print("calibrando");
-    lcd.setCursor(2, 0);
-    lcd.write(lightIndex);
-    lcd.setCursor(2, 1);
-    lcd.write(gearIndex);
-    lcd.setCursor(2, 2);
-    lcd.write(lightIndex);
-    lcd.setCursor(17, 0);
-    lcd.write(lightIndex);
-    lcd.setCursor(17, 1);
-    lcd.write(gearIndex);
-    lcd.setCursor(17, 2);
-    lcd.write(lightIndex);
-    lcd.setCursor(rep, 3);               // positionner colonne = rep, ligne = 3 (4ème ligne)
-    lcd.write((byte)0xFF);               // écrire un carré noir
-    if (lightIndex == 6){
-      lightIndex = 5;
-    }
-    else{
-      lightIndex = 6;
-    }
-    gearIndex++;
-    if (gearIndex > 4){
-      gearIndex = 0;
-      //lcd.clear();
-    }
-    delay(80);                          // pause pour voir le remplissage
-  }
-  I1offset = sampleI1 / (20.0 * float(loop_size));
-  I1offset = I1offset / 1023.0 * 5.0;
-  I1offset = (I1offset - 2.5) / 0.185 * 1.0;
-  //Serial.print(I1offset);
-  //Serial.print(",");
-  I2offset = sampleI2 / (20.0 * float(loop_size));
-  I2offset = I2offset / 1023.0 * 5.0;
-  I2offset = (I2offset - 2.5) / 0.185 * 1.0;
-  //Serial.print(I2offset);
-  //Serial.print(",");
-  lcd.clear();
-  lcd.setCursor(7,1);
-  lcd.print("LUDICX");
-  lcd.setCursor(7,1);
-  lcd.print("listo !");
-  delay(500);
-}
 
 // Returns the mean of the next "nSamples" values read on the "pin" analog pin
 float promedio(int nSamples, int pin){
