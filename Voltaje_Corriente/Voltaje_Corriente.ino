@@ -24,6 +24,8 @@ int LastM2State = LOW; // estado presedente del boton de measure 2
 
 const float V1max = 26.0; // el valor maximo medible a partir de cual se indicara FR(fuera de rango)
 const float V2max = 26.0; // el valor maximo medible a partir de cual se indicara FR(fuera de rango)
+const float IFilter = 0.1; // el ratio de filtrado numerico de las medidas de intensidad
+const float PFilter = 0.1; // el ratio de filtrado numerico de las medidas de potensia
 const int Measure1 = 2; // pin del boton de medision 1
 const int Measure2 = 3; // pin del boton de medicion 2
 bool forceRefresh = false;
@@ -174,8 +176,8 @@ void loop() {
   V2 = busvoltage2;
 
   // The intensity come from a INA219, so it is in mA, I convert to A
-  I1 = current_mA1 / 1000.0;
-  I2 = current_mA2 / 1000.0;
+  I1 = I1 * (1-IFilter) + IFilter * current_mA1 / 1000.0;
+  I2 = I2 * (1-IFilter) + IFilter * current_mA2 / 1000.0;
 
   if(I1 < iThreashold)
   {
@@ -263,11 +265,11 @@ void loop() {
   char buf_P2[10];
 
   // Power from INA219 is in mW, I convert to W
-  P1 = power_mW1 / 1000.0;
+  P1 = P1 * (1-PFilter) + PFilter * power_mW1 / 1000.0;
   floatToStr(I1, 4, 3, buf_I1);
   floatToStr(P1, 4, 2, buf_P1);
 
-  P2 = power_mW2 / 1000.0;
+  P2 = P2 * (1-PFilter) + PFilter * power_mW2 / 1000.0;
   floatToStr(I2, 4, 3, buf_I2);
   floatToStr(P2, 4, 2, buf_P2);
 
@@ -389,12 +391,7 @@ void loop() {
     lcd.setCursor(0, 3);
     lcd.print(ligne);
   }
-  /*
-  if (millis() - lastBegin > beginRefreshPeriod * 1000 * 60){
-    lastBegin = millis();
-    lcd.begin(20, 4);
-  }
-  */
+
   delay(10);
 }
 
