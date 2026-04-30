@@ -1,8 +1,10 @@
 #include <LiquidCrystal_I2C.h>
 #include <Wire.h>
 #include <stdio.h>
+#include <Adafruit_INA219.h>
 
-
+Adafruit_INA219 ina1;
+Adafruit_INA219 ina2(0x41);
 
 float V1; // Value of the 1st voltmeter (0-25 v) // EL valor detectado por le voltimetro 1
 float V2; // Value of the 2nd voltmeter (0-5 v) // EL valor detectado por el voltimetro 2
@@ -23,9 +25,9 @@ int LastM1State = LOW; // estado presednete del boton de measure 1
 int LastM2State = LOW; // estado presedente del boton de measure 2
 
 const int Vmetro1 = A1; // pin del voltimetro 1
-const float V1max = 30.0; // el valor maximo medible a partir de cual se indicara FR(fuera de rango)
+const float V1max = 26.0; // el valor maximo medible a partir de cual se indicara FR(fuera de rango)
 const int Vmetro2 = A0; // pin del voltimetro 2
-const float V2max = 10.0; // el valor maximo medible a partir de cual se indicara FR(fuera de rango)
+const float V2max = 26.0; // el valor maximo medible a partir de cual se indicara FR(fuera de rango)
 const int Imetro1 = A2; // pin del amperimetro 1
 const int Imetro2 = A3; // pin del amperimetro 2
 const int Measure1 = 2; // pin del boton de medision 1
@@ -143,38 +145,75 @@ void setup() {
   lcd.createChar(5, lightning1);
   lcd.createChar(6, lightning2);
   splashScreen(2);
-  calibrate(600);
+  if (! ina1.begin()) {
+    Serial.println("Failed to find INA219 1 chip");
+    while (1) { delay(10); }
+  }
+  if (! ina2.begin()) {
+    Serial.println("Failed to find INA219 2 chip");
+    while (1) { delay(10); }
+  }
+  //calibrate(600);
   Serial.println("setup compleat");
 }
 
 void loop() {
   // Getting the infos
+  float shuntvoltage1 = 0;
+  float busvoltage1 = 0;
+  float current_mA1 = 0;
+  float loadvoltage1 = 0;
+  float power_mW1 = 0;
+
+  shuntvoltage1 = ina1.getShuntVoltage_mV();
+  busvoltage1 = ina1.getBusVoltage_V();
+  current_mA1 = ina1.getCurrent_mA();
+  power_mW1 = ina1.getPower_mW();
+  loadvoltage1 = busvoltage1 + (shuntvoltage1 / 1000);
+
+  float shuntvoltage2 = 0;
+  float busvoltage2 = 0;
+  float current_mA2 = 0;
+  float loadvoltage2 = 0;
+  float power_mW2 = 0;
+
+  shuntvoltage2 = ina2.getShuntVoltage_mV();
+  busvoltage2 = ina2.getBusVoltage_V();
+  current_mA2 = ina2.getCurrent_mA();
+  power_mW2 = ina2.getPower_mW();
+  loadvoltage2 = busvoltage2 + (shuntvoltage2 / 1000);
+
   // the volts are sensed directly by analog input, so 0 to 1023 val are mapped to 0-5v
-  V1 = mapfloat (analogRead(Vmetro1), 0, 1023, 0, V1max);
+  //V1 = mapfloat (analogRead(Vmetro1), 0, 1023, 0, V1max);
+  V1 = busvoltage1;
   //delay(5);
-  V2 = mapfloat (analogRead(Vmetro2), 0, 1023, 0, V2max);
+  //V2 = mapfloat (analogRead(Vmetro2), 0, 1023, 0, V2max);
+  V2 = busvoltage2;
   //delay(5);
 
   // The intensity come from a ASC712 B05 sensor with a sensitivity of 185 mV / A
   // So I map from the 0-1023 to 0-5 then from 2.5 - 2.685 to 0-1A
-  float I1_mean = promedio(10, Imetro1);
-  float I1_analog = I1_mean / 1023 * 5;
-  I1_analog = (I1_analog - 2.5) / 0.185 * 1;
-  float I2_mean = promedio(10, Imetro2);
-  float I2_analog =  I2_mean / 1023 * 5;
-  I2_analog = (I2_analog - 2.5) / 0.185 * 1;
+  //float I1_mean = promedio(10, Imetro1);
+  //float I1_analog = I1_mean / 1023 * 5;
+  //I1_analog = (I1_analog - 2.5) / 0.185 * 1;
+  //float I2_mean = promedio(10, Imetro2);
+  //float I2_analog =  I2_mean / 1023 * 5;
+  //I2_analog = (I2_analog - 2.5) / 0.185 * 1;
   
-  I1 = I1_analog - I1offset;
+  //I1 = I1_analog - I1offset;
+  I1 = current_mA1;
 
-  I2 = I2_analog - I2offset;
-  if(I1 < iThreashold)
-  {
-    I1 = 0.0;
-  }
-  if(I2 < iThreashold)
-  {
-    I2 = 0.0;
-  }
+  //I2 = I2_analog - I2offset;
+  I2 = current_mA2;
+
+  //if(I1 < iThreashold)
+  //{
+  //  I1 = 0.0;
+  //}
+  //if(I2 < iThreashold)
+  //{
+  //  I2 = 0.0;
+  //}
 
   // Read the buttons
   forceRefresh = false;
@@ -251,32 +290,38 @@ void loop() {
   char buf_I2[10];
   char buf_P1[10];
   char buf_P2[10];
-  if (isSampling1){
-    strcpy(buf_I1, "calib");
-    strcpy(buf_P1, "calib");
-  }
-  else{
-    P1 = V1 * I1;
-    floatToStr(I1, 4, 2, buf_I1);
-    floatToStr(P1, 4, 1, buf_P1);
-  }
-  if (isSampling2){
-    strcpy(buf_I2, "calib");
-    strcpy(buf_P2, "calib");
-  }
-  else{
-    P2 = V2 * I2;
-    floatToStr(I2, 4, 2, buf_I2);
-    floatToStr(P2, 4, 1, buf_P2);
-  }
+  //if (isSampling1){
+  //  strcpy(buf_I1, "calib");
+  //  strcpy(buf_P1, "calib");
+  //}
+  //else{
+  //  P1 = V1 * I1;
+  //  floatToStr(I1, 4, 2, buf_I1);
+  //  floatToStr(P1, 4, 1, buf_P1);
+  //}
+  //if (isSampling2){
+  //  strcpy(buf_I2, "calib");
+  //  strcpy(buf_P2, "calib");
+  //}
+  //else{
+  //  P2 = V2 * I2;
+  //  floatToStr(I2, 4, 2, buf_I2);
+  //  floatToStr(P2, 4, 1, buf_P2);
+  //}
+  P1 = power_mW1;
+  floatToStr(I1, 4, 2, buf_I1);
+  floatToStr(P1, 4, 1, buf_P1);
+
+  P2 = power_mW2;
+  floatToStr(I2, 4, 2, buf_I2);
+  floatToStr(P2, 4, 1, buf_P2);
+
   // calculate E
   float dE;
-  dE = I1 * V1;
-  dE *= (millis() - lastTime)/1000.0;
+  dE = P1 * (millis() - lastTime)/1000.0;
   E1 += dE;
 
-  dE = I2 * V2;
-  dE *= (millis() - lastTime)/1000.0;
+  dE = P2 * (millis() - lastTime)/1000.0;
   E2 += dE;
 
   lastTime = millis();
@@ -304,7 +349,6 @@ void loop() {
   else{
     floatToStr(E1, 4, 2, buf_E1);
   }
-  
 
   abs_e = fabs(E2);
 
