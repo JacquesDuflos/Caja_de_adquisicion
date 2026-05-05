@@ -5,6 +5,8 @@
 
 Adafruit_INA219 ina1;
 Adafruit_INA219 ina2(0x41);
+bool ina1Found = true;
+bool ina2Found = true;
 
 float V1; // Value of the 1st voltmeter (0-25 v) // EL valor detectado por le voltimetro 1
 float V2; // Value of the 2nd voltmeter (0-5 v) // EL valor detectado por el voltimetro 2
@@ -133,11 +135,11 @@ void setup() {
   splashScreen(2);
   if (! ina1.begin()) {
     Serial.println("Failed to find INA219 1 chip");
-    while (1) { delay(10); }
+    ina1Found = false;
   }
   if (! ina2.begin()) {
     Serial.println("Failed to find INA219 2 chip");
-    while (1) { delay(10); }
+    ina2Found = false;
   }
   // Los pins de botones
   pinMode(Measure1, INPUT_PULLUP);
@@ -153,11 +155,13 @@ void loop() {
   float loadvoltage1 = 0;
   float power_mW1 = 0;
 
-  shuntvoltage1 = ina1.getShuntVoltage_mV();
-  busvoltage1 = ina1.getBusVoltage_V();
-  current_mA1 = ina1.getCurrent_mA();
-  power_mW1 = ina1.getPower_mW();
-  loadvoltage1 = busvoltage1 + (shuntvoltage1 / 1000);
+  if (ina1Found) {
+    shuntvoltage1 = ina1.getShuntVoltage_mV();
+    busvoltage1 = ina1.getBusVoltage_V();
+    current_mA1 = ina1.getCurrent_mA();
+    power_mW1 = ina1.getPower_mW();
+    loadvoltage1 = busvoltage1 + (shuntvoltage1 / 1000);
+  }
 
   float shuntvoltage2 = 0;
   float busvoltage2 = 0;
@@ -165,11 +169,13 @@ void loop() {
   float loadvoltage2 = 0;
   float power_mW2 = 0;
 
-  shuntvoltage2 = ina2.getShuntVoltage_mV();
-  busvoltage2 = ina2.getBusVoltage_V();
-  current_mA2 = ina2.getCurrent_mA();
-  power_mW2 = ina2.getPower_mW();
-  loadvoltage2 = busvoltage2 + (shuntvoltage2 / 1000);
+  if (ina2Found) {
+    shuntvoltage2 = ina2.getShuntVoltage_mV();
+    busvoltage2 = ina2.getBusVoltage_V();
+    current_mA2 = ina2.getCurrent_mA();
+    power_mW2 = ina2.getPower_mW();
+    loadvoltage2 = busvoltage2 + (shuntvoltage2 / 1000);
+  }
 
   
   V1 = busvoltage1;
@@ -337,57 +343,78 @@ void loop() {
 
     //send_json();
     send_4_floats();
+
     // printing to LCD
-    
     // Buffers pour conversion
     char ligne[21]; // 32 caractères + \0
+    int len;
 
-    // Construction de la ligne 1 complète
-    snprintf(ligne, sizeof(ligne), "%s %s   %s %s", "V1", buf_V1, "I1", buf_I1);
-    int len = strlen(ligne);
-    for (int i = len; i < 20; i++) {
-      ligne[i] = ' ';
+  // Construction de la ligne 1 complète
+    if (ina1Found) {
+      snprintf(ligne, sizeof(ligne), "%s %s   %s %s", "V1", buf_V1, "I1", buf_I1);
+      len = strlen(ligne);
+      for (int i = len; i < 20; i++) {
+        ligne[i] = ' ';
+      }
+      // Ajouter le caractère de fin de chaîne
+      ligne[20] = '\0';
     }
-    // Ajouter le caractère de fin de chaîne
-    ligne[20] = '\0';
+    else {
+      strcpy(ligne, "sensor 1 fallando");
+    }
 
     // Affichage sur le LCD
     lcd.setCursor(0, 0);
     lcd.print(ligne);
 
     // Construction de la ligne 2 complète
-    snprintf(ligne, sizeof(ligne), "%s %s   %s %s", "P1", buf_P1, "E1", buf_E1);
-    len = strlen(ligne);
-    for (int i = len; i < 20; i++) {
-      ligne[i] = ' ';
+    if (ina1Found) {
+      snprintf(ligne, sizeof(ligne), "%s %s   %s %s", "P1", buf_P1, "E1", buf_E1);
+      len = strlen(ligne);
+      for (int i = len; i < 20; i++) {
+        ligne[i] = ' ';
+      }
+      // Ajouter le caractère de fin de chaîne
+      ligne[20] = '\0';
     }
-    // Ajouter le caractère de fin de chaîne
-    ligne[20] = '\0';
+    else {
+      strcpy(ligne, "sensor 1 fallando");
+    }
 
     lcd.setCursor(0, 1);
     lcd.print(ligne);
 
     // Construction de la ligne 3 complète
-    snprintf(ligne, sizeof(ligne), "%s %s   %s %s", "V2", buf_V2, "I2", buf_I2);
-    len = strlen(ligne);
-    for (int i = len; i < 20; i++) {
-      ligne[i] = ' ';
+    if (ina2Found) {
+      snprintf(ligne, sizeof(ligne), "%s %s   %s %s", "V2", buf_V2, "I2", buf_I2);
+      len = strlen(ligne);
+      for (int i = len; i < 20; i++) {
+        ligne[i] = ' ';
+      }
+      // Ajouter le caractère de fin de chaîne
+      ligne[20] = '\0';
     }
-    // Ajouter le caractère de fin de chaîne
-    ligne[20] = '\0';
+    else {
+      strcpy(ligne, "sensor 2 fallando");
+    }
 
     // Affichage sur le LCD
     lcd.setCursor(0, 2);
     lcd.print(ligne);
 
     // Construction de la ligne 4 complète
-    snprintf(ligne, sizeof(ligne), "%s %s   %s %s", "P2", buf_P2, "E2", buf_E2);
-    len = strlen(ligne);
-    for (int i = len; i < 20; i++) {
-      ligne[i] = ' ';
+    if (ina2Found) {
+      snprintf(ligne, sizeof(ligne), "%s %s   %s %s", "P2", buf_P2, "E2", buf_E2);
+      len = strlen(ligne);
+      for (int i = len; i < 20; i++) {
+        ligne[i] = ' ';
+      }
+      // Ajouter le caractère de fin de chaîne
+      ligne[20] = '\0';
     }
-    // Ajouter le caractère de fin de chaîne
-    ligne[20] = '\0';
+    else {
+      strcpy(ligne, "sensor 2 fallando");
+    }
 
     lcd.setCursor(0, 3);
     lcd.print(ligne);
