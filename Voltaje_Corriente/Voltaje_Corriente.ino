@@ -116,9 +116,6 @@ int beginRefreshPeriod = 10; // In minuts, how often the lcd.begin methode is ca
 unsigned long lastBegin = 0; // las time in milis that has been called lcd.begin methode
 
 void setup() {
-  // Los pins de botones
-  pinMode(Measure1, INPUT_PULLUP);
-  pinMode(Measure2, INPUT_PULLUP);
   // Start serial comunication
   Serial.begin(9600);
   // initialize lcd screen
@@ -142,6 +139,9 @@ void setup() {
     Serial.println("Failed to find INA219 2 chip");
     while (1) { delay(10); }
   }
+  // Los pins de botones
+  pinMode(Measure1, INPUT_PULLUP);
+  pinMode(Measure2, INPUT_PULLUP);
   Serial.println("setup compleat");
 }
 
@@ -191,14 +191,15 @@ void loop() {
   // Read the buttons
   forceRefresh = false;
   int reading = digitalRead(Measure1);
+  //Serial.println(reading);
   if (reading != LastM1State){
     lastDebounceTime1 = millis();
-    //Serial.println("Bounce");
+    //Serial.println("Bounce 1");
   }
   if ((millis() - lastDebounceTime1) > debounceDelay){
-    //Serial.println("long touch");
+    //Serial.println("long touch 1");
     if (reading != M1State){
-      //Serial.println("button flipped");
+      //Serial.println("button flipped 1");
       M1State = reading;
       if (M1State == LOW){
         //
@@ -217,12 +218,12 @@ void loop() {
   reading = digitalRead(Measure2);
   if (reading != LastM2State){
     lastDebounceTime2 = millis();
-    //Serial.println("Bounce");
+    //Serial.println("Bounce 2");
   }
   if ((millis() - lastDebounceTime2) > debounceDelay){
-    //Serial.println("long touch");
+    //Serial.println("long touch 2");
     if (reading != M2State){
-      //Serial.println("button flipped");
+      //Serial.println("button flipped 2");
       M2State = reading;
       if (M2State == LOW){
         //
