@@ -35,7 +35,8 @@ bool forceRefresh = false;
 unsigned long lastDebounceTime1 = 0;  // the last time the output pin was toggled
 unsigned long lastDebounceTime2 = 0;  // the last time the output pin was toggled
 unsigned long debounceDelay = 50; 
-const float iThreashold = 0.002;
+const float iThreashold = 0.0015;
+const float vThreashold = 0.08;
 
 byte gear1[] = {
   B00000,
@@ -178,8 +179,18 @@ void loop() {
   }
 
   
-  V1 = busvoltage1;
-  V2 = busvoltage2;
+  if (busvoltage1 < vThreashold) {
+    V1 = 0;
+  }
+  else {
+    V1 = busvoltage1;
+  }
+  if (busvoltage2 < vThreashold) {
+    V2 = 0;
+  }
+  else {
+    V2 = busvoltage2;
+  }
 
   // The intensity come from a INA219, so it is in mA, I convert to A
   I1 = I1 * (1-IFilter) + IFilter * current_mA1 / 1000.0;
@@ -274,11 +285,11 @@ void loop() {
   // Power from INA219 is in mW, I convert to W
   P1 = P1 * (1-PFilter) + PFilter * power_mW1 / 1000.0;
   floatToStr(I1, 4, 3, buf_I1);
-  floatToStr(P1, 4, 2, buf_P1);
+  floatToStr(P1, 4, 3, buf_P1);
 
   P2 = P2 * (1-PFilter) + PFilter * power_mW2 / 1000.0;
   floatToStr(I2, 4, 3, buf_I2);
-  floatToStr(P2, 4, 2, buf_P2);
+  floatToStr(P2, 4, 3, buf_P2);
 
   // calculate E
   float dE;
