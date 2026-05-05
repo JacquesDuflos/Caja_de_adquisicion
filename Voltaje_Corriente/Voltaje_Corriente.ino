@@ -43,6 +43,7 @@ float sampleI1 = 0; // the sum of samples for I1
 float sampleI2 = 0; // the sum of samples for I2
 const int sampleSize = 50; // the total number of sample
 const float iThreashold = 0.035;
+const float vThreashold = 0.1;
 
 byte gear1[] = {
   B00000,
@@ -151,8 +152,14 @@ void loop() {
   // Getting the infos
   // the volts are sensed directly by analog input, so 0 to 1023 val are mapped to 0-5v
   V1 = mapfloat (analogRead(Vmetro1), 0, 1023, 0, V1max);
+  if (V1 < vThreashold) {
+    V1 = 0.0;
+  }
   //delay(5);
   V2 = mapfloat (analogRead(Vmetro2), 0, 1023, 0, V2max);
+  if (V2 < vThreashold) {
+    V2 = 0.0;
+  }
   //delay(5);
 
   // The intensity come from a ASC712 B05 sensor with a sensitivity of 185 mV / A
