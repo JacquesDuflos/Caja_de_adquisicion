@@ -160,7 +160,7 @@ void loop() {
     shuntvoltage1 = ina1.getShuntVoltage_mV();
     busvoltage1 = ina1.getBusVoltage_V();
     current_mA1 = ina1.getCurrent_mA();
-    power_mW1 = ina1.getPower_mW();
+    //power_mW1 = ina1.getPower_mW();
     loadvoltage1 = busvoltage1 + (shuntvoltage1 / 1000);
   }
 
@@ -174,7 +174,7 @@ void loop() {
     shuntvoltage2 = ina2.getShuntVoltage_mV();
     busvoltage2 = ina2.getBusVoltage_V();
     current_mA2 = ina2.getCurrent_mA();
-    power_mW2 = ina2.getPower_mW();
+    //power_mW2 = ina2.getPower_mW();
     loadvoltage2 = busvoltage2 + (shuntvoltage2 / 1000);
   }
 
@@ -204,6 +204,8 @@ void loop() {
   {
     I2 = 0.0;
   }
+
+
 
   // Read the buttons
   forceRefresh = false;
@@ -282,12 +284,12 @@ void loop() {
   char buf_P1[10];
   char buf_P2[10];
 
-  // Power from INA219 is in mW, I convert to W
-  P1 = P1 * (1-PFilter) + PFilter * power_mW1 / 1000.0;
+  // Get Power form pre-filtered and clamped I and V
+  P1 = I1 * V1;
   floatToStr(I1, 4, 3, buf_I1);
   floatToStr(P1, 4, 3, buf_P1);
 
-  P2 = P2 * (1-PFilter) + PFilter * power_mW2 / 1000.0;
+  P2 = I2 * V2;
   floatToStr(I2, 4, 3, buf_I2);
   floatToStr(P2, 4, 3, buf_P2);
 
