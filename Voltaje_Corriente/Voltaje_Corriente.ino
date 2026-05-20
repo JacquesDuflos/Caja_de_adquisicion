@@ -14,8 +14,8 @@ float I1; // El valor detectado por el voltimetro 1
 float I2; // El valor detectado por el voltimitro 2
 float P1; // El poder, calculado a partir del v y i selecionado
 float P2;
-float E1; // la energia, calculada integrando el poder
-float E2; // la energia, calculada integrando el poder
+float E1 = 0.0; // la energia, calculada integrando el poder
+float E2 = 0.0; // la energia, calculada integrando el poder
 unsigned long lastTime = 0; // to get the calculate the delta between 2 loops
 
 int M1State; // estado del boton de medision 1 (como Mesure 1 state)
@@ -320,11 +320,24 @@ void loop() {
     if (E1 < 0) {
       abs_e = -abs_e;
     }
-    floatToStr(abs_e, 4, 1, buf_E1);
+    floatToStr(abs_e, 3, 1, buf_E1);
     snprintf(buf_E1, sizeof(buf_E1), "%se%d", buf_E1, exposant);
   }
-  else{
-    floatToStr(E1, 4, 2, buf_E1);
+  else if (abs_e > 1000)
+  {
+    floatToStr(E1, 5, 0, buf_E1);
+  }
+  else if (abs_e > 100)
+  {
+    floatToStr(E1, 5, 1, buf_E1);
+  }
+  else if (abs_e > 10)
+  {
+    floatToStr(E1, 5, 1, buf_E1);
+  }
+  else
+  {
+    floatToStr(E1, 5, 2, buf_E1);
   }
 
   abs_e = fabs(E2);
@@ -339,11 +352,24 @@ void loop() {
     if (E2 < 0) {
       abs_e = -abs_e;
     }
-    floatToStr(abs_e, 4, 1, buf_E2);
+    floatToStr(abs_e, 3, 1, buf_E2);
     snprintf(buf_E2, sizeof(buf_E2), "%se%d", buf_E2, exposant);
   }
-  else{
-    floatToStr(E2, 4, 2, buf_E2);
+  else if (abs_e > 1000)
+  {
+    floatToStr(E2, 5, 0, buf_E2);
+  }
+  else if (abs_e > 100)
+  {
+    floatToStr(E2, 5, 1, buf_E2);
+  }
+  else if (abs_e > 10)
+  {
+    floatToStr(E2, 5, 1, buf_E2);
+  }
+  else
+  {
+    floatToStr(E2, 5, 2, buf_E2);
   }
 
   if ((millis() - lastRefresh)/1000.0 > refreshPeriode or forceRefresh){
@@ -364,7 +390,7 @@ void loop() {
 
   // Construction de la ligne 1 complète
     if (ina1Found) {
-      snprintf(ligne, sizeof(ligne), "%s %s   %s %s", "V1", buf_V1, "I1", buf_I1);
+      snprintf(ligne, sizeof(ligne), "%s  %s  %s%s", "V1", buf_V1, "I1", buf_I1);
       len = strlen(ligne);
       for (int i = len; i < 20; i++) {
         ligne[i] = ' ';
@@ -382,7 +408,7 @@ void loop() {
 
     // Construction de la ligne 2 complète
     if (ina1Found) {
-      snprintf(ligne, sizeof(ligne), "%s %s   %s %s", "P1", buf_P1, "E1", buf_E1);
+      snprintf(ligne, sizeof(ligne), "%s %s  %s%s", "P1", buf_P1, "E1", buf_E1);
       len = strlen(ligne);
       for (int i = len; i < 20; i++) {
         ligne[i] = ' ';
@@ -399,7 +425,7 @@ void loop() {
 
     // Construction de la ligne 3 complète
     if (ina2Found) {
-      snprintf(ligne, sizeof(ligne), "%s %s   %s %s", "V2", buf_V2, "I2", buf_I2);
+      snprintf(ligne, sizeof(ligne), "%s  %s  %s%s", "V2", buf_V2, "I2", buf_I2);
       len = strlen(ligne);
       for (int i = len; i < 20; i++) {
         ligne[i] = ' ';
@@ -417,7 +443,7 @@ void loop() {
 
     // Construction de la ligne 4 complète
     if (ina2Found) {
-      snprintf(ligne, sizeof(ligne), "%s %s   %s %s", "P2", buf_P2, "E2", buf_E2);
+      snprintf(ligne, sizeof(ligne), "%s %s  %s%s", "P2", buf_P2, "E2", buf_E2);
       len = strlen(ligne);
       for (int i = len; i < 20; i++) {
         ligne[i] = ' ';
